@@ -1,0 +1,2658 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>星尘倒计时 · 粒子互动计时器</title>
+  <style>
+    :root {
+      --bg-0: #0c1118;
+      --bg-1: #16202e;
+      --accent: #67e8f9;
+      --accent-2: #60a5fa;
+      --text: #f1f5f9;
+      --muted: rgba(203, 213, 225, 0.65);
+      --glass: rgba(15, 23, 36, 0.54);
+      --glass-strong: rgba(15, 23, 36, 0.88);
+      --glass-border: rgba(255, 255, 255, 0.11);
+      --glass-hover: rgba(255, 255, 255, 0.14);
+      --shadow: 0 12px 32px rgba(0, 0, 0, 0.34);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: radial-gradient(circle at 50% 45%, var(--bg-1) 0%, var(--bg-0) 76%);
+      color: var(--text);
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      user-select: none;
+    }
+
+    #stage {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: crosshair;
+      touch-action: none;
+    }
+
+    .vignette {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at center, transparent 54%, rgba(6, 10, 16, 0.35) 100%);
+      z-index: 2;
+    }
+
+    /* Ultra-clean HUD */
+    .hud {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 18px 22px;
+      transition: opacity 0.35s ease;
+    }
+
+    .hud.zen-hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .hud.zen-hidden * {
+      pointer-events: none !important;
+    }
+
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .glass-pill {
+      background: var(--glass);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid var(--glass-border);
+      border-radius: 999px;
+      box-shadow: var(--shadow);
+    }
+
+    .brand-cluster {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      pointer-events: auto;
+    }
+
+    .title-chip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+    }
+
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+      flex-shrink: 0;
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .pulse-dot.running {
+      animation: dotPulse 1.4s infinite ease-in-out;
+    }
+
+    @keyframes dotPulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.35); opacity: 0.55; }
+    }
+
+    .event-title-input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      width: 96px;
+      letter-spacing: 0.04em;
+    }
+
+    .event-title-input::placeholder {
+      color: var(--muted);
+    }
+
+    .game-hud {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 5px 12px;
+      pointer-events: auto;
+    }
+
+    .stat-box {
+      display: flex;
+      align-items: baseline;
+      gap: 5px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .stat-val {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .combo-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 1px 6px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--accent);
+      transition: transform 0.18s ease, background 0.2s ease;
+    }
+
+    .combo-badge.pop {
+      transform: scale(1.22);
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .nova-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .nova-bar {
+      width: 52px;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.14);
+      overflow: hidden;
+    }
+
+    .nova-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      transition: width 0.25s ease;
+    }
+
+    .nova-btn {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 3px 9px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .nova-btn.ready {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #0c1118;
+      border-color: transparent;
+      box-shadow: 0 0 14px var(--accent);
+    }
+
+    .top-actions {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      pointer-events: auto;
+    }
+
+    .icon-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid var(--glass-border);
+      background: var(--glass);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      color: rgba(241, 245, 249, 0.82);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: var(--shadow);
+    }
+
+    .icon-btn:hover {
+      background: var(--glass-hover);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .icon-btn.active {
+      border-color: rgba(255, 255, 255, 0.24);
+      color: var(--accent);
+    }
+
+    .center-banner {
+      position: fixed;
+      top: 70px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 6;
+      pointer-events: none;
+      text-align: center;
+      transition: opacity 0.35s ease;
+    }
+
+    .status-tag {
+      font-size: 11px;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: var(--accent);
+      opacity: 0.78;
+      font-weight: 500;
+    }
+
+    .bottom-dock {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      pointer-events: none;
+      width: 100%;
+    }
+
+    .drawer-popover {
+      pointer-events: auto;
+      background: var(--glass-strong);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 22px;
+      padding: 14px 16px;
+      box-shadow: 0 20px 56px rgba(0, 0, 0, 0.45);
+      width: min(560px, calc(100vw - 24px));
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      opacity: 0;
+      transform: translateY(10px) scale(0.98);
+      pointer-events: none;
+      transition: opacity 0.22s ease, transform 0.22s ease;
+      position: absolute;
+      bottom: 62px;
+    }
+
+    .drawer-popover.open {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+
+    .drawer-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .drawer-label {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      min-width: 56px;
+    }
+
+    .drawer-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      flex: 1;
+    }
+
+    .finale-inline-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      padding: 4px 6px 4px 11px;
+    }
+
+    .finale-text-input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      flex: 1;
+      min-width: 100px;
+    }
+
+    .finale-text-input::placeholder {
+      color: var(--muted);
+    }
+
+    .mini-preview-btn {
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.09);
+      color: var(--accent);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      white-space: nowrap;
+    }
+
+    .mini-preview-btn:hover {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: var(--accent);
+    }
+
+    .dock-panel {
+      pointer-events: auto;
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: 999px;
+      padding: 6px 10px;
+      box-shadow: var(--shadow);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 100%;
+    }
+
+    .btn {
+      border: 1px solid transparent;
+      background: rgba(255, 255, 255, 0.07);
+      color: rgba(241, 245, 249, 0.92);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 7px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.18s ease;
+      white-space: nowrap;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #0b111a;
+      font-weight: 700;
+      padding: 8px 18px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+    }
+
+    .btn-primary:hover {
+      filter: brightness(1.06);
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #0b111a;
+    }
+
+    .btn-chip {
+      padding: 5px 10px;
+      font-size: 12px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--muted);
+    }
+
+    .btn-chip:hover {
+      color: var(--text);
+    }
+
+    .btn-chip.active {
+      background: rgba(255, 255, 255, 0.16);
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.26);
+    }
+
+    .divider {
+      width: 1px;
+      height: 18px;
+      background: rgba(255, 255, 255, 0.12);
+      margin: 0 2px;
+    }
+
+    .swatch-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .swatch {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.22);
+      cursor: pointer;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .swatch:hover {
+      transform: scale(1.14);
+    }
+
+    .swatch.active {
+      border-color: #ffffff;
+      transform: scale(1.16);
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.45);
+    }
+
+    /* Custom Time Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      background: rgba(8, 12, 18, 0.62);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.22s ease;
+    }
+
+    .modal-backdrop.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 360px;
+      background: var(--glass-strong);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+      transform: translateY(10px) scale(0.97);
+      transition: transform 0.22s ease;
+    }
+
+    .modal-backdrop.open .modal-card {
+      transform: translateY(0) scale(1);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .modal-title {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .wheel-picker-wrap {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto 1fr;
+      align-items: center;
+      gap: 4px;
+      margin: 6px 0 14px;
+      padding: 8px 6px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .wheel-highlight-band {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      top: 50%;
+      height: 44px;
+      transform: translateY(-50%);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.07);
+      border-top: 1px solid rgba(255, 255, 255, 0.16);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+      pointer-events: none;
+    }
+
+    .wheel-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      position: relative;
+      z-index: 2;
+    }
+
+    .wheel-unit {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      margin-bottom: 2px;
+    }
+
+    .wheel-drum {
+      position: relative;
+      width: 100%;
+      height: 176px;
+      overflow: hidden;
+      cursor: ns-resize;
+      touch-action: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 26%, black 74%, transparent 100%);
+      mask-image: linear-gradient(to bottom, transparent 0%, black 26%, black 74%, transparent 100%);
+    }
+
+    .wheel-item {
+      height: 36px;
+      line-height: 36px;
+      width: 100%;
+      text-align: center;
+      font-variant-numeric: tabular-nums;
+      transition: transform 0.12s ease, opacity 0.12s ease, color 0.12s ease;
+      cursor: pointer;
+    }
+
+    .wheel-item.pos-0 {
+      height: 44px;
+      line-height: 44px;
+      font-size: 28px;
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 0 0 14px rgba(103, 232, 249, 0.35);
+    }
+
+    .wheel-item.pos-1 {
+      font-size: 19px;
+      font-weight: 500;
+      color: rgba(226, 232, 240, 0.55);
+    }
+
+    .wheel-item.pos-2 {
+      font-size: 14px;
+      font-weight: 400;
+      color: rgba(226, 232, 240, 0.24);
+    }
+
+    .wheel-colon {
+      font-size: 22px;
+      font-weight: 700;
+      color: rgba(226, 232, 240, 0.45);
+      padding-top: 18px;
+      z-index: 2;
+    }
+
+    .wheel-direct-input {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 68px;
+      height: 40px;
+      text-align: center;
+      background: rgba(12, 18, 30, 0.96);
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      color: #ffffff;
+      font-size: 26px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      outline: none;
+      z-index: 5;
+      box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.18);
+      -moz-appearance: textfield;
+    }
+
+    .wheel-direct-input::-webkit-outer-spin-button,
+    .wheel-direct-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .wheel-tip {
+      text-align: center;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    .zen-exit-btn {
+      position: fixed;
+      bottom: 18px;
+      right: 18px;
+      z-index: 20;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .zen-exit-btn.visible {
+      opacity: 0.78;
+      pointer-events: auto;
+    }
+
+    .zen-exit-btn.visible:hover {
+      opacity: 1;
+    }
+
+    .toast {
+      position: fixed;
+      top: 68px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-8px);
+      z-index: 40;
+      padding: 7px 16px;
+      border-radius: 999px;
+      background: var(--glass-strong);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.25s ease;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    @media (max-width: 720px) {
+      .hud {
+        padding: 12px 12px;
+      }
+      .game-hud {
+        display: none;
+      }
+      .dock-panel {
+        border-radius: 20px;
+        padding: 6px 8px;
+      }
+      .divider {
+        display: none;
+      }
+      .drawer-popover {
+        bottom: 92px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="stage"></canvas>
+  <div class="vignette"></div>
+
+  <div class="center-banner" id="centerBanner">
+    <div class="status-tag" id="statusTag">专注冲刺 · 已就绪</div>
+  </div>
+
+  <div class="hud" id="hud">
+    <header class="top-bar">
+      <div class="brand-cluster">
+        <div class="glass-pill title-chip">
+          <span class="pulse-dot" id="pulseDot"></span>
+          <input
+            type="text"
+            id="eventTitleInput"
+            class="event-title-input"
+            value="专注冲刺"
+            maxlength="14"
+            aria-label="倒计时主题名称"
+            placeholder="输入主题..."
+          />
+        </div>
+      </div>
+
+      <div class="glass-pill game-hud" title="捕获飘过的星辰碎片，积累星尘与超新星能量">
+        <div class="stat-box">
+          <span>星尘</span>
+          <span class="stat-val" id="scoreVal">0</span>
+        </div>
+        <span class="combo-badge" id="comboBadge">x1</span>
+        <div class="nova-wrap">
+          <div class="nova-bar">
+            <div class="nova-fill" id="novaFill"></div>
+          </div>
+          <button class="nova-btn" id="novaBtn" type="button" title="能量满 100% 时释放超新星粒子爆发">超新星</button>
+        </div>
+      </div>
+
+      <div class="top-actions">
+        <button class="icon-btn active" id="shardToggleBtn" type="button" title="开启/关闭星辰碎片" aria-label="星辰碎片开关">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        </button>
+        <button class="icon-btn active" id="soundToggleBtn" type="button" title="音效开关 (M)" aria-label="音效开关">
+          <svg id="soundOnIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+          </svg>
+          <svg id="soundOffIcon" style="display:none" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <line x1="23" y1="9" x2="17" y2="15"/>
+            <line x1="17" y1="9" x2="23" y2="15"/>
+          </svg>
+        </button>
+        <button class="icon-btn" id="zenToggleBtn" type="button" title="纯净沉浸模式 (F)" aria-label="沉浸模式">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 3 21 3 21 9"/>
+            <polyline points="9 21 3 21 3 15"/>
+            <line x1="21" y1="3" x2="14" y2="10"/>
+            <line x1="3" y1="21" x2="10" y2="14"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <footer class="bottom-dock">
+      <div class="drawer-popover" id="customizeDrawer" aria-hidden="true">
+        <div class="drawer-row">
+          <span class="drawer-label">互动玩法</span>
+          <div class="drawer-controls">
+            <button class="btn btn-chip active" data-mode="repulse" type="button">斥力冲击</button>
+            <button class="btn btn-chip" data-mode="vortex" type="button">引力黑洞</button>
+            <button class="btn btn-chip" data-mode="bullet" type="button">子弹时间</button>
+            <button class="btn btn-chip" data-mode="firework" type="button">星火烟花</button>
+          </div>
+        </div>
+
+        <div class="drawer-row">
+          <span class="drawer-label">主题色调</span>
+          <div class="drawer-controls">
+            <div class="swatch-group" id="themeSwatches" role="group" aria-label="配色主题">
+              <button class="swatch active" data-theme="cyber" type="button" title="静谧深海" style="background: linear-gradient(135deg, #67e8f9, #60a5fa);"></button>
+              <button class="swatch" data-theme="solar" type="button" title="暖茶琥珀" style="background: linear-gradient(135deg, #fbbf24, #fb923c);"></button>
+              <button class="swatch" data-theme="aurora" type="button" title="松林青岚" style="background: linear-gradient(135deg, #5eead4, #34d399);"></button>
+              <button class="swatch" data-theme="sakura" type="button" title="暖樱微光" style="background: linear-gradient(135deg, #fda4af, #fcd34d);"></button>
+              <button class="swatch" data-theme="cosmos" type="button" title="炭灰银霜" style="background: linear-gradient(135deg, #f1f5f9, #94a3b8);"></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="drawer-row">
+          <span class="drawer-label">快捷时长</span>
+          <div class="drawer-controls">
+            <button class="btn btn-chip" data-preset="10" type="button">10秒体验</button>
+            <button class="btn btn-chip active" data-preset="60" type="button">1分钟</button>
+            <button class="btn btn-chip" data-preset="180" type="button">3分钟</button>
+            <button class="btn btn-chip" data-preset="300" type="button">5分钟</button>
+            <button class="btn btn-chip" data-preset="1500" type="button">25分番茄</button>
+          </div>
+        </div>
+
+        <div class="drawer-row">
+          <span class="drawer-label">结束文字</span>
+          <div class="finale-inline-wrap">
+            <input
+              type="text"
+              id="finaleTextInput"
+              class="finale-text-input"
+              value="时间到!"
+              maxlength="80"
+              aria-label="倒计时结束粒子文字"
+              placeholder="支持长句子，超长自动粒子滚屏..."
+            />
+            <button class="mini-preview-btn" id="previewFinaleBtn" type="button">预览效果</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="dock-panel">
+        <button class="btn btn-primary" id="playPauseBtn" type="button" title="开始 / 暂停 (空格键)">
+          <svg id="playIcon" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <polygon points="6 3 20 12 6 21 6 3"/>
+          </svg>
+          <svg id="pauseIcon" style="display:none" width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <rect x="6" y="4" width="4" height="16" rx="1"/>
+            <rect x="14" y="4" width="4" height="16" rx="1"/>
+          </svg>
+          <span id="playPauseLabel">开始倒计时</span>
+        </button>
+
+        <button class="btn" id="resetBtn" type="button" title="重置计时 (R)">重置</button>
+        <button class="btn" id="addTenBtn" type="button" title="增加 10 秒">+10s</button>
+
+        <span class="divider"></span>
+
+        <button class="btn" id="customizeToggleBtn" type="button" title="展开配色、玩法、时长与结束文字设置">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+          </svg>
+          <span>定制</span>
+        </button>
+
+        <button class="btn" id="customTimeBtn" type="button">时间设定</button>
+      </div>
+    </footer>
+  </div>
+
+  <button class="btn glass-pill zen-exit-btn" id="zenExitBtn" type="button">退出沉浸 (F)</button>
+  <div class="toast" id="toast"></div>
+
+  <div class="modal-backdrop" id="customModal" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="customModalTitle">
+      <div class="modal-header">
+        <h2 class="modal-title" id="customModalTitle">时间设定</h2>
+        <button class="icon-btn" id="closeModalBtn" type="button" aria-label="关闭" style="width:30px;height:30px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="wheel-picker-wrap">
+        <div class="wheel-highlight-band"></div>
+        <div class="wheel-col">
+          <span class="wheel-unit">小时</span>
+          <div class="wheel-drum" id="wheelHours" data-max="23" role="spinbutton" aria-label="小时"></div>
+        </div>
+        <span class="wheel-colon">:</span>
+        <div class="wheel-col">
+          <span class="wheel-unit">分钟</span>
+          <div class="wheel-drum" id="wheelMinutes" data-max="59" role="spinbutton" aria-label="分钟"></div>
+        </div>
+        <span class="wheel-colon">:</span>
+        <div class="wheel-col">
+          <span class="wheel-unit">秒</span>
+          <div class="wheel-drum" id="wheelSeconds" data-max="59" role="spinbutton" aria-label="秒"></div>
+        </div>
+      </div>
+      <div class="wheel-tip">滚动鼠标或上下拖拽调节 · 双击中间数字可直接输入</div>
+      <div class="modal-footer">
+        <button class="btn" id="cancelModalBtn" type="button">取消</button>
+        <button class="btn btn-primary" id="applyCustomBtn" type="button">应用时间</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      /* ---------------- Clean, Serene, Non-Muddy Themes ---------------- */
+      const THEMES = {
+        cyber: {
+          name: '静谧深海',
+          bg0: '#0b1118',
+          bg1: '#152232',
+          fadeRgb: '12, 18, 27',
+          accent: '#67e8f9',
+          accent2: '#60a5fa',
+          palette: ['#67e8f9', '#7dd3fc', '#60a5fa', '#bae6fd', '#f0f9ff']
+        },
+        solar: {
+          name: '暖茶琥珀',
+          bg0: '#14100c',
+          bg1: '#261d14',
+          fadeRgb: '21, 16, 12',
+          accent: '#fbbf24',
+          accent2: '#fb923c',
+          palette: ['#fde68a', '#fbbf24', '#fb923c', '#fdba74', '#fffbeb']
+        },
+        aurora: {
+          name: '松林青岚',
+          bg0: '#0a1414',
+          bg1: '#132726',
+          fadeRgb: '11, 22, 22',
+          accent: '#5eead4',
+          accent2: '#34d399',
+          palette: ['#5eead4', '#6ee7b7', '#34d399', '#99f6e4', '#ecfdf5']
+        },
+        sakura: {
+          name: '暖樱微光',
+          bg0: '#161013',
+          bg1: '#291c22',
+          fadeRgb: '23, 17, 20',
+          accent: '#fda4af',
+          accent2: '#fcd34d',
+          palette: ['#fecdd3', '#fda4af', '#f9a8d4', '#fde68a', '#fff1f2']
+        },
+        cosmos: {
+          name: '炭灰银霜',
+          bg0: '#111317',
+          bg1: '#1f232b',
+          fadeRgb: '18, 20, 25',
+          accent: '#e2e8f0',
+          accent2: '#94a3b8',
+          palette: ['#ffffff', '#e2e8f0', '#cbd5e1', '#94a3b8', '#f8fafc']
+        }
+      };
+
+      /* ---------------- Ethereal Musical Sound Engine ---------------- */
+      class SoundEngine {
+        constructor() {
+          this.ctx = null;
+          this.master = null;
+          this.delaySend = null;
+          this.enabled = true;
+        }
+
+        unlock() {
+          if (!this.ctx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            this.ctx = new AudioCtx();
+
+            const comp = this.ctx.createDynamicsCompressor();
+            comp.threshold.value = -16;
+            comp.ratio.value = 3;
+            comp.connect(this.ctx.destination);
+
+            this.master = this.ctx.createGain();
+            this.master.gain.value = 0.85;
+            this.master.connect(comp);
+
+            const delay = this.ctx.createDelay(1.0);
+            delay.delayTime.value = 0.24;
+            const fb = this.ctx.createGain();
+            fb.gain.value = 0.34;
+            const lp = this.ctx.createBiquadFilter();
+            lp.type = 'lowpass';
+            lp.frequency.value = 2400;
+            const wet = this.ctx.createGain();
+            wet.gain.value = 0.32;
+
+            this.delaySend = this.ctx.createGain();
+            this.delaySend.gain.value = 1.0;
+            this.delaySend.connect(delay);
+            delay.connect(lp);
+            lp.connect(fb);
+            fb.connect(delay);
+            lp.connect(wet);
+            wet.connect(comp);
+          }
+          if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume().catch(() => {});
+          }
+        }
+
+        playBell(freq, startTime, duration = 0.7, volume = 0.08, sendEcho = 0.5) {
+          if (!this.ctx || !this.master) return;
+          const t = startTime;
+
+          const osc1 = this.ctx.createOscillator();
+          const osc2 = this.ctx.createOscillator();
+          const g1 = this.ctx.createGain();
+          const g2 = this.ctx.createGain();
+
+          osc1.type = 'sine';
+          osc1.frequency.setValueAtTime(freq, t);
+
+          osc2.type = 'triangle';
+          osc2.frequency.setValueAtTime(freq * 2.002, t);
+
+          g1.gain.setValueAtTime(0.0001, t);
+          g1.gain.linearRampToValueAtTime(volume, t + 0.012);
+          g1.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+
+          g2.gain.setValueAtTime(0.0001, t);
+          g2.gain.linearRampToValueAtTime(volume * 0.2, t + 0.01);
+          g2.gain.exponentialRampToValueAtTime(0.0001, t + duration * 0.55);
+
+          osc1.connect(g1);
+          osc2.connect(g2);
+          g1.connect(this.master);
+          g2.connect(this.master);
+
+          if (sendEcho > 0 && this.delaySend) {
+            const send = this.ctx.createGain();
+            send.gain.value = sendEcho;
+            g1.connect(send);
+            send.connect(this.delaySend);
+          }
+
+          osc1.start(t);
+          osc2.start(t);
+          osc1.stop(t + duration + 0.04);
+          osc2.stop(t + duration * 0.6 + 0.04);
+        }
+
+        playTick(urgent = false, secLeft = 10) {
+          if (!this.enabled) return;
+          this.unlock();
+          if (!this.ctx) return;
+          const now = this.ctx.currentTime;
+          if (!urgent) {
+            this.playBell(587.33, now, 0.22, 0.03, 0.22);
+          } else {
+            const scale = [523.25, 587.33, 659.25, 739.99, 783.99, 880.0, 987.77, 1046.5, 1174.66, 1318.5];
+            const idx = Math.max(0, Math.min(scale.length - 1, 10 - secLeft));
+            this.playBell(scale[idx], now, 0.55, 0.072, 0.55);
+            const sub = this.ctx.createOscillator();
+            const sg = this.ctx.createGain();
+            sub.type = 'sine';
+            sub.frequency.setValueAtTime(110, now);
+            sub.frequency.exponentialRampToValueAtTime(55, now + 0.22);
+            sg.gain.setValueAtTime(0.001, now);
+            sg.gain.linearRampToValueAtTime(0.055, now + 0.015);
+            sg.gain.exponentialRampToValueAtTime(0.0001, now + 0.26);
+            sub.connect(sg);
+            sg.connect(this.master);
+            sub.start(now);
+            sub.stop(now + 0.28);
+          }
+        }
+
+        playShockwave() {
+          if (!this.enabled) return;
+          this.unlock();
+          if (!this.ctx) return;
+          const now = this.ctx.currentTime;
+          const sub = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          sub.type = 'sine';
+          sub.frequency.setValueAtTime(196, now);
+          sub.frequency.exponentialRampToValueAtTime(73.42, now + 0.42);
+          gain.gain.setValueAtTime(0.001, now);
+          gain.gain.linearRampToValueAtTime(0.08, now + 0.025);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.46);
+          sub.connect(gain);
+          gain.connect(this.master);
+          sub.start(now);
+          sub.stop(now + 0.48);
+
+          this.playBell(587.33, now, 0.65, 0.032, 0.6);
+          this.playBell(880.0, now + 0.04, 0.75, 0.026, 0.7);
+        }
+
+        playShardCatch(combo) {
+          if (!this.enabled) return;
+          this.unlock();
+          if (!this.ctx) return;
+          const lydian = [523.25, 587.33, 659.25, 739.99, 783.99, 880.0, 987.77, 1046.5, 1174.66, 1318.5];
+          const base = lydian[Math.min(combo - 1, lydian.length - 1)];
+          const now = this.ctx.currentTime;
+          this.playBell(base, now, 0.85, 0.068, 0.65);
+          this.playBell(base * 1.5, now + 0.06, 0.9, 0.038, 0.75);
+        }
+
+        playSupernova() {
+          if (!this.enabled) return;
+          this.unlock();
+          if (!this.ctx) return;
+          const now = this.ctx.currentTime;
+          const chord = [261.63, 392.0, 493.88, 587.33, 783.99, 1046.5];
+          chord.forEach((f, idx) => {
+            this.playBell(f, now + idx * 0.045, 1.8, idx === 0 ? 0.07 : 0.052, 0.8);
+          });
+        }
+
+        playCelebration() {
+          if (!this.enabled) return;
+          this.unlock();
+          if (!this.ctx) return;
+          const notes = [523.25, 659.25, 783.99, 987.77, 1174.66, 1318.5, 1567.98, 2093.0];
+          const now = this.ctx.currentTime;
+          notes.forEach((freq, i) => {
+            this.playBell(freq, now + i * 0.085, 1.65, 0.065, 0.8);
+          });
+        }
+      }
+
+      const sound = new SoundEngine();
+
+      /* ---------------- DOM Refs ---------------- */
+      const canvas = document.getElementById('stage');
+      const ctx = canvas.getContext('2d', { alpha: false });
+      const hud = document.getElementById('hud');
+      const statusTag = document.getElementById('statusTag');
+      const pulseDot = document.getElementById('pulseDot');
+      const eventTitleInput = document.getElementById('eventTitleInput');
+      const finaleTextInput = document.getElementById('finaleTextInput');
+      const previewFinaleBtn = document.getElementById('previewFinaleBtn');
+      const scoreVal = document.getElementById('scoreVal');
+      const comboBadge = document.getElementById('comboBadge');
+      const novaFill = document.getElementById('novaFill');
+      const novaBtn = document.getElementById('novaBtn');
+      const shardToggleBtn = document.getElementById('shardToggleBtn');
+      const soundToggleBtn = document.getElementById('soundToggleBtn');
+      const soundOnIcon = document.getElementById('soundOnIcon');
+      const soundOffIcon = document.getElementById('soundOffIcon');
+      const zenToggleBtn = document.getElementById('zenToggleBtn');
+      const zenExitBtn = document.getElementById('zenExitBtn');
+      const playPauseBtn = document.getElementById('playPauseBtn');
+      const playIcon = document.getElementById('playIcon');
+      const pauseIcon = document.getElementById('pauseIcon');
+      const playPauseLabel = document.getElementById('playPauseLabel');
+      const resetBtn = document.getElementById('resetBtn');
+      const addTenBtn = document.getElementById('addTenBtn');
+      const customizeToggleBtn = document.getElementById('customizeToggleBtn');
+      const customizeDrawer = document.getElementById('customizeDrawer');
+      const customTimeBtn = document.getElementById('customTimeBtn');
+      const customModal = document.getElementById('customModal');
+      const closeModalBtn = document.getElementById('closeModalBtn');
+      const cancelModalBtn = document.getElementById('cancelModalBtn');
+      const applyCustomBtn = document.getElementById('applyCustomBtn');
+      const wheelHoursEl = document.getElementById('wheelHours');
+      const wheelMinutesEl = document.getElementById('wheelMinutes');
+      const wheelSecondsEl = document.getElementById('wheelSeconds');
+      const toastEl = document.getElementById('toast');
+
+      /* ---------------- App State ---------------- */
+      const state = {
+        width: window.innerWidth,
+        height: window.innerHeight,
+        dpr: Math.min(window.devicePixelRatio || 1, 2),
+        themeKey: 'cyber',
+        mode: 'repulse',
+        totalSeconds: 60,
+        remainingMs: 60000,
+        running: false,
+        finished: false,
+        previewingFinale: false,
+        marqueeActive: false,
+        marqueeOffset: 0,
+        marqueeStripWidth: 0,
+        marqueeLoopLen: 0,
+        marqueePauseTimer: 0,
+        marqueeSpeed: 110,
+        lastTickSecond: 60,
+        lastFrameTime: 0,
+        zen: false,
+        drawerOpen: false,
+        shardsEnabled: true,
+        score: 0,
+        combo: 1,
+        comboTimer: 0,
+        novaCharge: 0,
+        celebrationTimer: 0,
+        screenShake: 0,
+        timeScale: 1,
+        pointer: {
+          x: -9999,
+          y: -9999,
+          down: false,
+          active: false
+        }
+      };
+
+      /* ---------------- Tactile Round Particle Sprite (Zero Flicker!) ---------------- */
+      const orbSpriteCache = new Map();
+
+      function getOrbSprite(color) {
+        if (orbSpriteCache.has(color)) return orbSpriteCache.get(color);
+        const size = 32;
+        const half = size / 2;
+        const c = document.createElement('canvas');
+        c.width = size;
+        c.height = size;
+        const gctx = c.getContext('2d');
+        // Crisp, tangible round particle core with a gentle soft halo
+        const grad = gctx.createRadialGradient(half, half, 0, half, half, half);
+        grad.addColorStop(0, '#ffffff');
+        grad.addColorStop(0.28, color);
+        grad.addColorStop(0.55, color + '77');
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        gctx.fillStyle = grad;
+        gctx.fillRect(0, 0, size, size);
+        orbSpriteCache.set(color, c);
+        return c;
+      }
+
+      /* ---------------- Particle Entities ---------------- */
+      const textParticles = [];
+      const burstParticles = [];
+      const bgDust = [];
+      const shockwaves = [];
+      const shards = [];
+      const floatingTexts = [];
+
+      const offCanvas = document.createElement('canvas');
+      const offCtx = offCanvas.getContext('2d', { willReadFrequently: true });
+
+      let currentRenderedText = '';
+      let animFrameId = null;
+      let toastTimer = null;
+      let previewTimer = null;
+
+      /* ---------------- Utilities ---------------- */
+      function showToast(msg) {
+        toastEl.textContent = msg;
+        toastEl.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => {
+          toastEl.classList.remove('show');
+        }, 1800);
+      }
+
+      function getFinaleText() {
+        const val = finaleTextInput.value.trim();
+        return val || 'TIME UP!';
+      }
+
+      function saveFinaleText(val) {
+        try {
+          localStorage.setItem('stardust_timer_finale_text', val);
+        } catch (e) {}
+      }
+
+      function getTheme() {
+        return THEMES[state.themeKey];
+      }
+
+      function pickColor() {
+        const pal = getTheme().palette;
+        return pal[Math.floor(Math.random() * pal.length)];
+      }
+
+      function sampleSpatialColor(x, y) {
+        const pal = getTheme().palette;
+        const u = Math.max(0, Math.min(0.999, (x / Math.max(1, state.width)) * 0.72 + (y / Math.max(1, state.height)) * 0.28));
+        const idx = Math.floor(u * pal.length);
+        return pal[Math.min(pal.length - 1, idx)];
+      }
+
+      function formatTime(ms) {
+        const totalSec = Math.max(0, Math.ceil(ms / 1000));
+        const h = Math.floor(totalSec / 3600);
+        const m = Math.floor((totalSec % 3600) / 60);
+        const s = totalSec % 60;
+        const pad = (n) => String(n).padStart(2, '0');
+        return h > 0 ? `${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(m)}:${pad(s)}`;
+      }
+
+      function applyTheme(key) {
+        if (!THEMES[key]) return;
+        state.themeKey = key;
+        const t = THEMES[key];
+        const root = document.documentElement.style;
+        root.setProperty('--bg-0', t.bg0);
+        root.setProperty('--bg-1', t.bg1);
+        root.setProperty('--accent', t.accent);
+        root.setProperty('--accent-2', t.accent2);
+
+        document.querySelectorAll('#themeSwatches .swatch').forEach((el) => {
+          el.classList.toggle('active', el.dataset.theme === key);
+        });
+
+        for (let i = 0; i < textParticles.length; i++) {
+          const p = textParticles[i];
+          p.color = sampleSpatialColor(p.tx, p.ty);
+        }
+        try {
+          localStorage.setItem('stardust_timer_theme', key);
+        } catch (e) {}
+      }
+
+      /* ---------------- Calm Ambient Background Dust (No Flickering!) ---------------- */
+      function initBgDust() {
+        bgDust.length = 0;
+        const count = Math.min(75, Math.max(35, Math.floor((state.width * state.height) / 22000)));
+        for (let i = 0; i < count; i++) {
+          bgDust.push({
+            x: Math.random() * state.width,
+            y: Math.random() * state.height,
+            r: Math.random() * 1.4 + 0.5,
+            alpha: Math.random() * 0.28 + 0.08,
+            vx: (Math.random() - 0.5) * 0.14,
+            vy: -(0.06 + Math.random() * 0.14)
+          });
+        }
+      }
+
+      function resizeCanvas() {
+        state.width = window.innerWidth;
+        state.height = window.innerHeight;
+        state.dpr = Math.min(window.devicePixelRatio || 1, 2);
+        canvas.width = Math.floor(state.width * state.dpr);
+        canvas.height = Math.floor(state.height * state.dpr);
+        canvas.style.width = state.width + 'px';
+        canvas.style.height = state.height + 'px';
+        ctx.setTransform(state.dpr, 0, 0, state.dpr, 0, 0);
+
+        initBgDust();
+
+        const isFinale = state.finished || state.previewingFinale;
+        const label = isFinale ? getFinaleText() : formatTime(state.remainingMs);
+        currentRenderedText = '';
+        morphToText(label, false, isFinale);
+      }
+
+      /* ---------------- Clean Tactile Particle Sampling (Digits & Marquee Screen) ---------------- */
+      function sampleTextPoints(text, isFinale = false) {
+        const w = Math.max(320, Math.floor(state.width));
+        const h = Math.max(240, Math.floor(state.height));
+        const centerY = h * 0.48;
+        const maxSingleWidth = w * 0.72;
+
+        // Check if finale text is long enough to become a scrolling particle display screen
+        const baseFontSize = isFinale
+          ? Math.max(54, Math.floor(Math.min(w * 0.13, h * 0.19, 146)))
+          : Math.max(48, Math.floor(Math.min(w * 0.165, h * 0.22, 178)));
+
+        offCtx.font = `900 ${baseFontSize}px "Inter", "PingFang SC", "Microsoft YaHei", sans-serif`;
+        const naturalWidth = offCtx.measureText(text).width;
+
+        const useMarquee = isFinale && naturalWidth > maxSingleWidth * 1.05;
+
+        if (useMarquee) {
+          const marqueeFont = Math.max(54, Math.floor(Math.min(h * 0.175, 128)));
+          offCtx.font = `900 ${marqueeFont}px "Inter", "PingFang SC", "Microsoft YaHei", sans-serif`;
+          const textW = Math.ceil(offCtx.measureText(text).width);
+          const padX = 40;
+          const stripW = Math.min(8200, textW + padX * 2);
+          const stripH = Math.ceil(marqueeFont * 1.45);
+
+          offCanvas.width = stripW;
+          offCanvas.height = stripH;
+          offCtx.clearRect(0, 0, stripW, stripH);
+          offCtx.fillStyle = '#ffffff';
+          offCtx.textAlign = 'left';
+          offCtx.textBaseline = 'middle';
+          offCtx.font = `900 ${marqueeFont}px "Inter", "PingFang SC", "Microsoft YaHei", sans-serif`;
+          offCtx.fillText(text, padX, stripH * 0.5);
+
+          const imgData = offCtx.getImageData(0, 0, stripW, stripH).data;
+          const step = marqueeFont > 96 ? 5 : 4;
+          const points = [];
+          const yOffset = centerY - stripH * 0.5;
+          for (let y = 0; y < stripH; y += step) {
+            for (let x = 0; x < stripW; x += step) {
+              if (imgData[(y * stripW + x) * 4 + 3] > 140) {
+                points.push({
+                  x: x + (Math.random() - 0.5) * 1.1,
+                  y: yOffset + y + (Math.random() - 0.5) * 1.1
+                });
+              }
+            }
+          }
+
+          // Cap total stored marquee points while preserving full-strip density
+          const MAX_MARQUEE_PTS = 7500;
+          let finalPts = points;
+          if (points.length > MAX_MARQUEE_PTS) {
+            const ratio = points.length / MAX_MARQUEE_PTS;
+            finalPts = [];
+            for (let i = 0; i < MAX_MARQUEE_PTS; i++) {
+              finalPts.push(points[Math.floor(i * ratio)]);
+            }
+          }
+          return { points: finalPts, marquee: true, stripWidth: stripW };
+        }
+
+        // Standard centered sampling
+        offCanvas.width = w;
+        offCanvas.height = h;
+        offCtx.clearRect(0, 0, w, h);
+
+        let fontSize = baseFontSize;
+        if (naturalWidth > maxSingleWidth) {
+          fontSize = Math.max(36, Math.floor(fontSize * (maxSingleWidth / naturalWidth)));
+        }
+        offCtx.fillStyle = '#ffffff';
+        offCtx.textAlign = 'center';
+        offCtx.textBaseline = 'middle';
+        offCtx.font = `900 ${fontSize}px "Inter", "PingFang SC", "Microsoft YaHei", sans-serif`;
+        offCtx.fillText(text, w * 0.5, centerY);
+
+        const imgData = offCtx.getImageData(0, 0, w, h).data;
+        const baseStep = Math.round(Math.sqrt((w * h) / (isFinale ? 76000 : 52000)));
+        const step = Math.max(4, Math.min(isFinale ? 6 : 7, baseStep));
+        const points = [];
+        for (let y = 0; y < h; y += step) {
+          for (let x = 0; x < w; x += step) {
+            if (imgData[(y * w + x) * 4 + 3] > 140) {
+              points.push({
+                x: x + (Math.random() - 0.5) * 1.2,
+                y: y + (Math.random() - 0.5) * 1.2
+              });
+            }
+          }
+        }
+
+        const MAX_PTS = isFinale ? 2200 : 1850;
+        let finalPts = points;
+        if (points.length > MAX_PTS) {
+          const ratio = points.length / MAX_PTS;
+          finalPts = [];
+          for (let i = 0; i < MAX_PTS; i++) {
+            finalPts.push(points[Math.floor(i * ratio)]);
+          }
+        }
+        return { points: finalPts, marquee: false, stripWidth: w };
+      }
+
+      function morphToText(text, dramatic = true, isFinale = false) {
+        if (text === currentRenderedText) return;
+        currentRenderedText = text;
+        const sampled = sampleTextPoints(text, isFinale);
+        const targets = sampled.points;
+        state.marqueeActive = sampled.marquee;
+
+        if (sampled.marquee) {
+          state.marqueeStripWidth = sampled.stripWidth;
+          state.marqueeLoopLen = Math.max(state.width + 180, sampled.stripWidth + 220);
+          // Start aligned near the left margin so the opening text is immediately readable at a glance
+          const leftInset = Math.max(36, Math.floor(state.width * 0.08));
+          state.marqueeOffset = -leftInset;
+          state.marqueePauseTimer = 0.85;
+        }
+
+        if (!sampled.marquee) {
+          for (let i = targets.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            const tmp = targets[i];
+            targets[i] = targets[j];
+            targets[j] = tmp;
+          }
+        }
+
+        const cx = state.width * 0.5;
+        const cy = state.height * 0.48;
+
+        for (let i = 0; i < targets.length; i++) {
+          const t = targets[i];
+          const initTx = sampled.marquee ? (t.x - state.marqueeOffset) : t.x;
+          const col = sampled.marquee
+            ? getTheme().palette[Math.floor((t.x / Math.max(1, sampled.stripWidth)) * getTheme().palette.length) % getTheme().palette.length]
+            : sampleSpatialColor(t.x, t.y);
+
+          if (i < textParticles.length) {
+            const p = textParticles[i];
+            const dx = initTx - p.tx;
+            const dy = t.y - p.ty;
+            p.lx = t.x;
+            p.tx = initTx;
+            p.ty = t.y;
+            p.color = col;
+            if (sampled.marquee) {
+              if (initTx > state.width + 60 || initTx < -60) {
+                p.x = initTx;
+                p.y = t.y;
+                p.vx = 0;
+                p.vy = 0;
+              }
+            } else if (dramatic) {
+              if (isFinale) {
+                const ang = Math.atan2(p.y - cy, p.x - cx) + 0.85;
+                const burst = 5 + Math.random() * 7;
+                p.vx += Math.cos(ang) * burst;
+                p.vy += Math.sin(ang) * burst;
+              } else if (dx * dx + dy * dy > 120) {
+                p.vx += (Math.random() - 0.5) * 3.6;
+                p.vy += (Math.random() - 0.5) * 3.6;
+              }
+            }
+          } else {
+            const angle = Math.random() * Math.PI * 2;
+            const dist = (isFinale ? 105 : 70) + Math.random() * Math.min(state.width, state.height) * 0.3;
+            textParticles.push({
+              x: sampled.marquee ? initTx : cx + Math.cos(angle) * dist,
+              y: sampled.marquee ? t.y : cy + Math.sin(angle) * dist,
+              vx: sampled.marquee ? 0 : (Math.random() - 0.5) * 2.5,
+              vy: sampled.marquee ? 0 : (Math.random() - 0.5) * 2.5,
+              lx: t.x,
+              tx: initTx,
+              ty: t.y,
+              size: Math.random() * 1.4 + 1.9,
+              color: col,
+              phase: Math.random() * Math.PI * 2
+            });
+          }
+        }
+
+        if (textParticles.length > targets.length) {
+          for (let i = targets.length; i < textParticles.length; i++) {
+            const p = textParticles[i];
+            if (Math.random() < 0.4 && burstParticles.length < 700) {
+              burstParticles.push({
+                x: p.x,
+                y: p.y,
+                vx: (Math.random() - 0.5) * 3.4,
+                vy: (Math.random() - 0.5) * 3.4 - 0.6,
+                size: p.size,
+                color: p.color,
+                alpha: 0.9,
+                decay: 0.016 + Math.random() * 0.014,
+                gravity: 0.02
+              });
+            }
+          }
+          textParticles.length = targets.length;
+        }
+      }
+
+      /* ---------------- Particle Effects ---------------- */
+      function spawnShockwave(x, y, maxR = 260, color = null, force = 13) {
+        shockwaves.push({
+          x,
+          y,
+          r: 8,
+          maxR,
+          color: color || getTheme().accent,
+          alpha: 0.85
+        });
+
+        const forceR = maxR * 0.85;
+        for (let i = 0; i < textParticles.length; i++) {
+          const p = textParticles[i];
+          const dx = p.x - x;
+          const dy = p.y - y;
+          const d = Math.hypot(dx, dy) || 1;
+          if (d < forceR) {
+            const strength = (1 - d / forceR) * force;
+            p.vx += (dx / d) * strength;
+            p.vy += (dy / d) * strength;
+          }
+        }
+      }
+
+      function spawnFirework(x, y, count = 58, power = 6.0) {
+        const pal = getTheme().palette;
+        const baseColor = pal[Math.floor(Math.random() * pal.length)];
+        const altColor = pal[Math.floor(Math.random() * pal.length)];
+        for (let i = 0; i < count; i++) {
+          if (burstParticles.length > 850) break;
+          const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.25;
+          const speed = (0.3 + Math.random() * 0.85) * power;
+          burstParticles.push({
+            x,
+            y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            size: Math.random() * 1.8 + 1.8,
+            color: i % 3 === 0 ? altColor : baseColor,
+            alpha: 1,
+            decay: 0.012 + Math.random() * 0.012,
+            gravity: 0.045
+          });
+        }
+        shockwaves.push({
+          x,
+          y,
+          r: 6,
+          maxR: 110,
+          color: baseColor,
+          alpha: 0.6
+        });
+      }
+
+      function spawnTrailSpark(x, y) {
+        if (burstParticles.length > 800) return;
+        burstParticles.push({
+          x: x + (Math.random() - 0.5) * 6,
+          y: y + (Math.random() - 0.5) * 6,
+          vx: (Math.random() - 0.5) * 0.7,
+          vy: (Math.random() - 0.5) * 0.7 - 0.25,
+          size: Math.random() * 1.4 + 1.4,
+          color: pickColor(),
+          alpha: 0.68,
+          decay: 0.028 + Math.random() * 0.018,
+          gravity: -0.006
+        });
+      }
+
+      function spawnShard() {
+        if (!state.shardsEnabled || shards.length >= 4) return;
+        const margin = 90;
+        const side = Math.floor(Math.random() * 4);
+        let x, y, vx, vy;
+        if (side === 0) {
+          x = -20; y = margin + Math.random() * (state.height - margin * 2);
+          vx = 0.95 + Math.random() * 0.9; vy = (Math.random() - 0.5) * 0.7;
+        } else if (side === 1) {
+          x = state.width + 20; y = margin + Math.random() * (state.height - margin * 2);
+          vx = -(0.95 + Math.random() * 0.9); vy = (Math.random() - 0.5) * 0.7;
+        } else if (side === 2) {
+          x = margin + Math.random() * (state.width - margin * 2); y = -20;
+          vx = (Math.random() - 0.5) * 0.9; vy = 0.8 + Math.random() * 0.8;
+        } else {
+          x = margin + Math.random() * (state.width - margin * 2); y = state.height + 20;
+          vx = (Math.random() - 0.5) * 0.9; vy = -(0.8 + Math.random() * 0.8);
+        }
+
+        const isGolden = Math.random() < 0.24;
+        shards.push({
+          x,
+          y,
+          vx,
+          vy,
+          r: isGolden ? 13 : 10,
+          golden: isGolden,
+          color: isGolden ? '#fbbf24' : getTheme().accent,
+          pulse: Math.random() * Math.PI * 2,
+          life: 17
+        });
+      }
+
+      function addFloatingText(x, y, text, color) {
+        floatingTexts.push({
+          x,
+          y,
+          vy: -1.1,
+          text,
+          color,
+          alpha: 1
+        });
+      }
+
+      function catchShard(index) {
+        const s = shards[index];
+        shards.splice(index, 1);
+
+        state.combo = Math.min(12, state.combo + 1);
+        state.comboTimer = 4.5;
+        const pts = (s.golden ? 30 : 10) * state.combo;
+        state.score += pts;
+        state.novaCharge = Math.min(100, state.novaCharge + (s.golden ? 28 : 16));
+
+        scoreVal.textContent = String(state.score);
+        comboBadge.textContent = `x${state.combo}`;
+        comboBadge.classList.add('pop');
+        setTimeout(() => comboBadge.classList.remove('pop'), 180);
+        updateNovaUI();
+
+        sound.playShardCatch(state.combo);
+        spawnFirework(s.x, s.y, s.golden ? 38 : 22, s.golden ? 5.2 : 3.9);
+        addFloatingText(s.x, s.y - 10, `+${pts}${s.golden ? ' ★' : ''}`, s.color);
+      }
+
+      function updateNovaUI() {
+        novaFill.style.width = `${state.novaCharge}%`;
+        if (state.novaCharge >= 100) {
+          novaBtn.classList.add('ready');
+          novaBtn.textContent = '释放超新星!';
+        } else {
+          novaBtn.classList.remove('ready');
+          novaBtn.textContent = '超新星';
+        }
+      }
+
+      function triggerSupernova() {
+        if (state.novaCharge < 100) {
+          showToast('捕获飘过的星辰碎片，能量满 100% 即可释放超新星');
+          return;
+        }
+        state.novaCharge = 0;
+        updateNovaUI();
+        state.screenShake = 9;
+        sound.playSupernova();
+
+        const cx = state.width * 0.5;
+        const cy = state.height * 0.48;
+        spawnShockwave(cx, cy, Math.max(state.width, state.height) * 0.7, getTheme().accent, 22);
+        spawnShockwave(cx, cy, Math.max(state.width, state.height) * 0.5, getTheme().accent2, 14);
+        spawnFirework(cx, cy, 105, 8.5);
+        addFloatingText(cx, cy - 60, 'SUPERNOVA', getTheme().accent);
+      }
+
+      /* ---------------- Timer Logic ---------------- */
+      function updateStatusText() {
+        const title = eventTitleInput.value.trim() || '星尘倒计时';
+        if (state.finished) {
+          statusTag.textContent = `${title} · 倒计时结束`;
+          pulseDot.classList.remove('running');
+          playIcon.style.display = 'block';
+          pauseIcon.style.display = 'none';
+          playPauseLabel.textContent = '再来一次';
+        } else if (state.running) {
+          const secLeft = Math.ceil(state.remainingMs / 1000);
+          statusTag.textContent = secLeft <= 10 ? '最终冲刺 · 最后十秒' : `${title} · 进行中`;
+          pulseDot.classList.add('running');
+          playIcon.style.display = 'none';
+          pauseIcon.style.display = 'block';
+          playPauseLabel.textContent = '暂停';
+        } else {
+          statusTag.textContent = `${title} · 已就绪`;
+          pulseDot.classList.remove('running');
+          playIcon.style.display = 'block';
+          pauseIcon.style.display = 'none';
+          playPauseLabel.textContent = state.remainingMs < state.totalSeconds * 1000 ? '继续倒计时' : '开始倒计时';
+        }
+      }
+
+      function setPreset(seconds, autoStart = false) {
+        clearTimeout(previewTimer);
+        state.previewingFinale = false;
+        state.totalSeconds = Math.max(1, seconds);
+        state.remainingMs = state.totalSeconds * 1000;
+        state.lastTickSecond = state.totalSeconds;
+        state.finished = false;
+        state.running = autoStart;
+        state.celebrationTimer = 0;
+
+        document.querySelectorAll('[data-preset]').forEach((btn) => {
+          btn.classList.toggle('active', Number(btn.dataset.preset) === seconds);
+        });
+
+        morphToText(formatTime(state.remainingMs), true, false);
+        updateStatusText();
+      }
+
+      function togglePlayPause() {
+        sound.unlock();
+        clearTimeout(previewTimer);
+        state.previewingFinale = false;
+        if (state.finished) {
+          setPreset(state.totalSeconds, true);
+          showToast('重新开始倒计时');
+          return;
+        }
+        state.running = !state.running;
+        if (state.running) {
+          sound.playTick(false);
+          morphToText(formatTime(state.remainingMs), false, false);
+          const cx = state.width * 0.5;
+          const cy = state.height * 0.48;
+          spawnShockwave(cx, cy, 210, getTheme().accent, 7);
+        }
+        updateStatusText();
+      }
+
+      function resetTimer() {
+        clearTimeout(previewTimer);
+        state.previewingFinale = false;
+        state.running = false;
+        state.finished = false;
+        state.remainingMs = state.totalSeconds * 1000;
+        state.lastTickSecond = state.totalSeconds;
+        state.celebrationTimer = 0;
+        morphToText(formatTime(state.remainingMs), true, false);
+        updateStatusText();
+        showToast('已重置倒计时');
+      }
+
+      function addTenSeconds() {
+        clearTimeout(previewTimer);
+        state.previewingFinale = false;
+        if (state.finished) {
+          state.finished = false;
+          state.remainingMs = 10000;
+          state.totalSeconds = Math.max(state.totalSeconds, 10);
+          state.lastTickSecond = 10;
+        } else {
+          state.remainingMs += 10000;
+          if (state.remainingMs > state.totalSeconds * 1000) {
+            state.totalSeconds = Math.ceil(state.remainingMs / 1000);
+          }
+          state.lastTickSecond = Math.ceil(state.remainingMs / 1000);
+        }
+        morphToText(formatTime(state.remainingMs), true, false);
+        updateStatusText();
+        sound.playTick(false);
+        showToast('+10 秒');
+      }
+
+      function triggerFinishCelebration() {
+        state.running = false;
+        state.finished = true;
+        state.previewingFinale = false;
+        state.remainingMs = 0;
+        state.celebrationTimer = 7.5;
+        state.screenShake = 7;
+
+        currentRenderedText = '';
+        morphToText(getFinaleText(), true, true);
+        updateStatusText();
+        sound.playCelebration();
+
+        const cx = state.width * 0.5;
+        const cy = state.height * 0.48;
+        spawnShockwave(cx, cy, Math.max(state.width, state.height) * 0.65, getTheme().accent, 18);
+        for (let i = 0; i < 4; i++) {
+          setTimeout(() => {
+            const fx = state.width * (0.2 + Math.random() * 0.6);
+            const fy = state.height * (0.18 + Math.random() * 0.42);
+            spawnFirework(fx, fy, 64, 6.2);
+          }, i * 320);
+        }
+      }
+
+      /* ---------------- Clean Progress Halo ---------------- */
+      function drawMarqueeScreenFrame() {
+        const cy = state.height * 0.48;
+        const bandH = Math.min(state.height * 0.3, 210);
+        const topY = cy - bandH * 0.5;
+        const botY = cy + bandH * 0.5;
+        const padX = Math.max(24, state.width * 0.06);
+        const t = getTheme();
+
+        ctx.save();
+        // Subtle glowing glass display band
+        const bgGrad = ctx.createLinearGradient(padX, topY, state.width - padX, botY);
+        bgGrad.addColorStop(0, 'rgba(255,255,255,0.01)');
+        bgGrad.addColorStop(0.5, 'rgba(255,255,255,0.035)');
+        bgGrad.addColorStop(1, 'rgba(255,255,255,0.01)');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(padX, topY, state.width - padX * 2, bandH);
+
+        // Top & bottom luminous rails
+        const railGrad = ctx.createLinearGradient(padX, 0, state.width - padX, 0);
+        railGrad.addColorStop(0, 'rgba(255,255,255,0)');
+        railGrad.addColorStop(0.18, t.accent + '88');
+        railGrad.addColorStop(0.82, t.accent2 + '88');
+        railGrad.addColorStop(1, 'rgba(255,255,255,0)');
+
+        ctx.strokeStyle = railGrad;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(padX, topY);
+        ctx.lineTo(state.width - padX, topY);
+        ctx.moveTo(padX, botY);
+        ctx.lineTo(state.width - padX, botY);
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      function drawProgressHalo(nowSec) {
+        if (state.marqueeActive) {
+          drawMarqueeScreenFrame();
+          return;
+        }
+        const cx = state.width * 0.5;
+        const cy = state.height * 0.48;
+        const radius = Math.min(state.width, state.height) * 0.315;
+        if (radius < 70) return;
+
+        const progress = state.totalSeconds > 0 ? Math.max(0, Math.min(1, state.remainingMs / (state.totalSeconds * 1000))) : 0;
+        const urgent = state.running && state.remainingMs <= 10000 && state.remainingMs > 0;
+        const t = getTheme();
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.065)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(nowSec * (urgent ? 0.32 : 0.08));
+        ctx.beginPath();
+        ctx.setLineDash([3, 16]);
+        ctx.arc(0, 0, radius + 12, 0, Math.PI * 2);
+        ctx.strokeStyle = urgent ? 'rgba(251, 113, 133, 0.35)' : 'rgba(255, 255, 255, 0.11)';
+        ctx.lineWidth = 1.3;
+        ctx.stroke();
+        ctx.restore();
+
+        if (progress > 0.001) {
+          const startAngle = -Math.PI / 2;
+          const endAngle = startAngle + Math.PI * 2 * progress;
+          const grad = ctx.createLinearGradient(cx - radius, cy - radius, cx + radius, cy + radius);
+          if (urgent) {
+            grad.addColorStop(0, '#fb7185');
+            grad.addColorStop(1, '#fbbf24');
+          } else {
+            grad.addColorStop(0, t.accent);
+            grad.addColorStop(1, t.accent2);
+          }
+
+          ctx.beginPath();
+          ctx.arc(cx, cy, radius, startAngle, endAngle);
+          ctx.strokeStyle = grad;
+          ctx.lineWidth = urgent ? 3.2 : 2.3;
+          ctx.lineCap = 'round';
+          ctx.shadowBlur = 14;
+          ctx.shadowColor = urgent ? '#fb7185' : t.accent;
+          ctx.stroke();
+
+          // Steady glowing pearl tip
+          const tipX = cx + Math.cos(endAngle) * radius;
+          const tipY = cy + Math.sin(endAngle) * radius;
+          const tipSprite = getOrbSprite(urgent ? '#fb7185' : t.accent);
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.drawImage(tipSprite, tipX - 11, tipY - 11, 22, 22);
+        }
+        ctx.restore();
+      }
+
+      /* ---------------- Main Animation Loop ---------------- */
+      let shardSpawnAccum = 0;
+
+      function animate(timestamp) {
+        if (!state.lastFrameTime) state.lastFrameTime = timestamp;
+        const rawDt = Math.min(0.05, (timestamp - state.lastFrameTime) / 1000);
+        state.lastFrameTime = timestamp;
+
+        const targetScale = (state.mode === 'bullet' && state.pointer.down) ? 0.22 : 1.0;
+        state.timeScale += (targetScale - state.timeScale) * 0.14;
+        const nowSec = timestamp * 0.001;
+
+        if (state.running && !state.finished) {
+          state.remainingMs -= rawDt * 1000;
+          if (state.remainingMs <= 0) {
+            triggerFinishCelebration();
+          } else {
+            const secNow = Math.ceil(state.remainingMs / 1000);
+            if (secNow !== state.lastTickSecond) {
+              state.lastTickSecond = secNow;
+              const urgent = secNow <= 10;
+              morphToText(formatTime(state.remainingMs), true, false);
+              updateStatusText();
+              sound.playTick(urgent, secNow);
+              if (urgent) {
+                const cx = state.width * 0.5;
+                const cy = state.height * 0.48;
+                spawnShockwave(cx, cy, 230, '#fb7185', 7.5);
+                state.screenShake = Math.max(state.screenShake, 2.5);
+              }
+            }
+          }
+        }
+
+        if (state.celebrationTimer > 0) {
+          state.celebrationTimer -= rawDt;
+          if (Math.random() < rawDt * 1.8) {
+            spawnFirework(
+              state.width * (0.18 + Math.random() * 0.64),
+              state.height * (0.16 + Math.random() * 0.44),
+              48,
+              5.8
+            );
+          }
+        }
+
+        if (state.comboTimer > 0) {
+          state.comboTimer -= rawDt;
+          if (state.comboTimer <= 0) {
+            state.combo = 1;
+            comboBadge.textContent = 'x1';
+          }
+        }
+
+        if (state.shardsEnabled) {
+          shardSpawnAccum += rawDt;
+          if (shardSpawnAccum > 2.8) {
+            shardSpawnAccum = 0;
+            spawnShard();
+          }
+        }
+
+        const theme = getTheme();
+        ctx.save();
+        if (state.screenShake > 0.15) {
+          ctx.translate((Math.random() - 0.5) * state.screenShake, (Math.random() - 0.5) * state.screenShake);
+          state.screenShake *= 0.88;
+        } else {
+          state.screenShake = 0;
+        }
+
+        // Clean, serene background fade
+        const fadeAlpha = state.timeScale < 0.5 ? 0.18 : 0.34;
+        ctx.fillStyle = `rgba(${theme.fadeRgb}, ${fadeAlpha})`;
+        ctx.fillRect(-20, -20, state.width + 40, state.height + 40);
+
+        // Subtle, clean radial center lift
+        const cx = state.width * 0.5;
+        const cy = state.height * 0.48;
+        const aura = ctx.createRadialGradient(cx, cy, 20, cx, cy, Math.max(state.width, state.height) * 0.58);
+        aura.addColorStop(0, theme.bg1 + '77');
+        aura.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = aura;
+        ctx.fillRect(0, 0, state.width, state.height);
+
+        // Calm, steady ambient dust specks (zero blinking!)
+        for (let i = 0; i < bgDust.length; i++) {
+          const st = bgDust[i];
+          st.x += st.vx * state.timeScale;
+          st.y += st.vy * state.timeScale;
+          if (st.x < 0) st.x = state.width;
+          if (st.x > state.width) st.x = 0;
+          if (st.y < 0) st.y = state.height;
+          if (st.y > state.height) st.y = 0;
+          ctx.fillStyle = `rgba(226, 232, 240, ${st.alpha.toFixed(2)})`;
+          ctx.beginPath();
+          ctx.arc(st.x, st.y, st.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        drawProgressHalo(nowSec);
+
+        // Pointer aura for vortex / bullet
+        if (state.pointer.active) {
+          if (state.mode === 'vortex') {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(state.pointer.x, state.pointer.y, state.pointer.down ? 50 : 32, 0, Math.PI * 2);
+            ctx.strokeStyle = theme.accent + '66';
+            ctx.lineWidth = 1.4;
+            ctx.stroke();
+            ctx.restore();
+          } else if (state.mode === 'bullet' && state.pointer.down) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(state.pointer.x, state.pointer.y, 44, 0, Math.PI * 2);
+            ctx.strokeStyle = theme.accent2 + '88';
+            ctx.lineWidth = 1.8;
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+
+        // Brief reading pause at start, then smooth seamless marquee scroll
+        if (state.marqueeActive && state.marqueeLoopLen > 0) {
+          if (state.marqueePauseTimer > 0) {
+            state.marqueePauseTimer -= rawDt;
+          } else {
+            state.marqueeOffset += state.marqueeSpeed * rawDt * state.timeScale;
+          }
+        }
+
+        // Steady, Tactile Round Particles (Zero Strobing!)
+        const urgent = state.running && state.remainingMs <= 10000 && state.remainingMs > 0;
+        const px = state.pointer.x;
+        const py = state.pointer.y;
+        const pointerOn = state.pointer.active;
+        const spring = (state.marqueeActive ? 0.16 : 0.082) * state.timeScale;
+        const damping = Math.pow(state.marqueeActive ? 0.78 : 0.84, state.timeScale);
+        const loopLen = state.marqueeLoopLen || 1;
+        const wrapPad = 140;
+
+        ctx.globalCompositeOperation = 'lighter';
+        for (let i = 0; i < textParticles.length; i++) {
+          const p = textParticles[i];
+          if (state.marqueeActive) {
+            const prevTx = p.tx;
+            const rawX = p.lx - state.marqueeOffset;
+            const liveTx = (((rawX + wrapPad) % loopLen) + loopLen) % loopLen - wrapPad;
+            p.tx = liveTx;
+            // Viewport culling + clean teleport on wrap
+            if (liveTx < -70 || liveTx > state.width + 70) {
+              p.x = liveTx;
+              p.y = p.ty;
+              p.vx = 0;
+              p.vy = 0;
+              continue;
+            }
+            if (Math.abs(liveTx - prevTx) > 220) {
+              p.x = liveTx;
+              p.y = p.ty;
+              p.vx = 0;
+              p.vy = 0;
+            }
+          }
+
+          p.phase += 0.015 * state.timeScale;
+
+          // Ultra-gentle calm float
+          const floatAmp = urgent ? 1.1 : 0.4;
+          const targetX = p.tx + Math.cos(p.phase) * floatAmp;
+          const targetY = p.ty + Math.sin(p.phase) * floatAmp;
+
+          p.vx += (targetX - p.x) * spring;
+          p.vy += (targetY - p.y) * spring;
+
+          if (pointerOn) {
+            const dx = p.x - px;
+            const dy = p.y - py;
+            const distSq = dx * dx + dy * dy;
+
+            if (state.mode === 'repulse') {
+              const rad = state.pointer.down ? 170 : 115;
+              if (distSq < rad * rad && distSq > 1) {
+                const d = Math.sqrt(distSq);
+                const push = (1 - d / rad) * (state.pointer.down ? 4.8 : 2.4) * state.timeScale;
+                p.vx += (dx / d) * push;
+                p.vy += (dy / d) * push;
+              }
+            } else if (state.mode === 'vortex') {
+              const rad = state.pointer.down ? 270 : 185;
+              if (distSq < rad * rad && distSq > 4) {
+                const d = Math.sqrt(distSq);
+                const strength = (1 - d / rad) * (state.pointer.down ? 4.2 : 2.0) * state.timeScale;
+                p.vx += (-dx / d * 0.72 - dy / d * 0.95) * strength;
+                p.vy += (-dy / d * 0.72 + dx / d * 0.95) * strength;
+              }
+            }
+          }
+
+          p.vx *= damping;
+          p.vy *= damping;
+          p.x += p.vx * state.timeScale;
+          p.y += p.vy * state.timeScale;
+
+          const col = urgent && i % 4 === 0 ? '#fb7185' : p.color;
+          const sprite = getOrbSprite(col);
+          const drawSize = p.size * 2.55;
+          ctx.globalAlpha = 0.92;
+          ctx.drawImage(sprite, p.x - drawSize * 0.5, p.y - drawSize * 0.5, drawSize, drawSize);
+        }
+
+        // Burst & Trail Particles
+        for (let i = burstParticles.length - 1; i >= 0; i--) {
+          const b = burstParticles[i];
+          b.x += b.vx * state.timeScale;
+          b.y += b.vy * state.timeScale;
+          b.vy += b.gravity * state.timeScale;
+          b.vx *= Math.pow(0.985, state.timeScale);
+          b.alpha -= b.decay * state.timeScale;
+          if (b.alpha <= 0.02) {
+            burstParticles.splice(i, 1);
+            continue;
+          }
+          const sprite = getOrbSprite(b.color);
+          const dSize = b.size * 2.8;
+          ctx.globalAlpha = Math.max(0, b.alpha);
+          ctx.drawImage(sprite, b.x - dSize * 0.5, b.y - dSize * 0.5, dSize, dSize);
+        }
+        ctx.globalAlpha = 1;
+
+        // Shockwaves
+        for (let i = shockwaves.length - 1; i >= 0; i--) {
+          const sw = shockwaves[i];
+          sw.r += (sw.maxR - sw.r) * 0.12 * state.timeScale + 1.8 * state.timeScale;
+          sw.alpha *= Math.pow(0.92, state.timeScale);
+          if (sw.alpha < 0.03 || sw.r >= sw.maxR) {
+            shockwaves.splice(i, 1);
+            continue;
+          }
+          ctx.strokeStyle = sw.color;
+          ctx.globalAlpha = sw.alpha * 0.8;
+          ctx.lineWidth = 1.8;
+          ctx.beginPath();
+          ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+
+        // Collectible Star Shards
+        ctx.globalCompositeOperation = 'source-over';
+        for (let i = shards.length - 1; i >= 0; i--) {
+          const s = shards[i];
+          s.x += s.vx * state.timeScale;
+          s.y += s.vy * state.timeScale;
+          s.pulse += 0.05;
+          s.life -= rawDt;
+
+          if (pointerOn && Math.hypot(s.x - px, s.y - py) < s.r + 24) {
+            catchShard(i);
+            continue;
+          }
+
+          if (s.life <= 0 || s.x < -60 || s.x > state.width + 60 || s.y < -60 || s.y > state.height + 60) {
+            shards.splice(i, 1);
+            continue;
+          }
+
+          const glowR = s.r + Math.sin(s.pulse) * 1.4;
+          const sprite = getOrbSprite(s.color);
+          ctx.save();
+          ctx.globalCompositeOperation = 'lighter';
+          ctx.drawImage(sprite, s.x - glowR * 1.8, s.y - glowR * 1.8, glowR * 3.6, glowR * 3.6);
+          ctx.translate(s.x, s.y);
+          ctx.rotate(s.pulse * 0.35);
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          for (let k = 0; k < 8; k++) {
+            const rad = k % 2 === 0 ? glowR * 0.78 : glowR * 0.3;
+            const ang = (k * Math.PI) / 4;
+            if (k === 0) ctx.moveTo(Math.cos(ang) * rad, Math.sin(ang) * rad);
+            else ctx.lineTo(Math.cos(ang) * rad, Math.sin(ang) * rad);
+          }
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
+
+        // Floating score texts
+        for (let i = floatingTexts.length - 1; i >= 0; i--) {
+          const ft = floatingTexts[i];
+          ft.y += ft.vy;
+          ft.alpha -= 0.02;
+          if (ft.alpha <= 0) {
+            floatingTexts.splice(i, 1);
+            continue;
+          }
+          ctx.save();
+          ctx.globalAlpha = ft.alpha;
+          ctx.font = '700 15px "Inter", sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillStyle = ft.color;
+          ctx.fillText(ft.text, ft.x, ft.y);
+          ctx.restore();
+        }
+
+        ctx.restore();
+        animFrameId = requestAnimationFrame(animate);
+      }
+
+      /* ---------------- Canvas Pointer Events ---------------- */
+      function getPointerPos(e) {
+        const rect = canvas.getBoundingClientRect();
+        return {
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top
+        };
+      }
+
+      customizeDrawer.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+      });
+
+      canvas.addEventListener('pointerdown', (e) => {
+        sound.unlock();
+        if (state.drawerOpen && document.activeElement !== finaleTextInput) {
+          setDrawerOpen(false);
+        }
+        const pos = getPointerPos(e);
+        state.pointer.x = pos.x;
+        state.pointer.y = pos.y;
+        state.pointer.down = true;
+        state.pointer.active = true;
+
+        for (let i = shards.length - 1; i >= 0; i--) {
+          if (Math.hypot(shards[i].x - pos.x, shards[i].y - pos.y) < shards[i].r + 32) {
+            catchShard(i);
+            return;
+          }
+        }
+
+        if (state.mode === 'repulse') {
+          spawnShockwave(pos.x, pos.y, 260, getTheme().accent, 14);
+          sound.playShockwave();
+        } else if (state.mode === 'firework') {
+          spawnFirework(pos.x, pos.y, 64, 6.2);
+          sound.playShardCatch(Math.min(8, Math.floor(Math.random() * 5) + 2));
+        } else if (state.mode === 'vortex') {
+          spawnShockwave(pos.x, pos.y, 120, getTheme().accent2, -5);
+        }
+      });
+
+      canvas.addEventListener('pointermove', (e) => {
+        const pos = getPointerPos(e);
+        const moved = Math.hypot(pos.x - state.pointer.x, pos.y - state.pointer.y);
+        state.pointer.x = pos.x;
+        state.pointer.y = pos.y;
+        state.pointer.active = true;
+        if (moved > 12 && Math.random() < 0.55) {
+          spawnTrailSpark(pos.x, pos.y);
+        }
+      });
+
+      window.addEventListener('pointerup', () => {
+        if (state.pointer.down && state.mode === 'vortex') {
+          spawnShockwave(state.pointer.x, state.pointer.y, 240, getTheme().accent, 13);
+          sound.playShockwave();
+        }
+        state.pointer.down = false;
+      });
+
+      canvas.addEventListener('pointerleave', () => {
+        state.pointer.active = false;
+        state.pointer.down = false;
+      });
+
+      /* ---------------- UI Controls Wiring ---------------- */
+      function setDrawerOpen(open) {
+        state.drawerOpen = open;
+        customizeDrawer.classList.toggle('open', open);
+        customizeDrawer.setAttribute('aria-hidden', open ? 'false' : 'true');
+        customizeToggleBtn.classList.toggle('active', open);
+      }
+
+      customizeToggleBtn.addEventListener('click', () => {
+        setDrawerOpen(!state.drawerOpen);
+      });
+
+      playPauseBtn.addEventListener('click', togglePlayPause);
+      resetBtn.addEventListener('click', resetTimer);
+      addTenBtn.addEventListener('click', addTenSeconds);
+      novaBtn.addEventListener('click', triggerSupernova);
+
+      document.querySelectorAll('[data-preset]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          sound.unlock();
+          const sec = Number(btn.dataset.preset);
+          setPreset(sec, sec === 10);
+          setDrawerOpen(false);
+          showToast(sec === 10 ? '10秒倒计时开始' : `已设为 ${btn.textContent}`);
+        });
+      });
+
+      document.querySelectorAll('[data-mode]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          state.mode = btn.dataset.mode;
+          document.querySelectorAll('[data-mode]').forEach((b) => {
+            b.classList.toggle('active', b === btn);
+          });
+          showToast(`已切换玩法：${btn.textContent}`);
+        });
+      });
+
+      document.querySelectorAll('#themeSwatches .swatch').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          applyTheme(btn.dataset.theme);
+          showToast(`已切换色调：${THEMES[btn.dataset.theme].name}`);
+        });
+      });
+
+      shardToggleBtn.addEventListener('click', () => {
+        state.shardsEnabled = !state.shardsEnabled;
+        shardToggleBtn.classList.toggle('active', state.shardsEnabled);
+        if (!state.shardsEnabled) shards.length = 0;
+        showToast(state.shardsEnabled ? '已开启星辰碎片' : '已关闭星辰碎片');
+      });
+
+      soundToggleBtn.addEventListener('click', () => {
+        sound.enabled = !sound.enabled;
+        soundToggleBtn.classList.toggle('active', sound.enabled);
+        soundOnIcon.style.display = sound.enabled ? 'block' : 'none';
+        soundOffIcon.style.display = sound.enabled ? 'none' : 'block';
+        if (sound.enabled) sound.playTick(false);
+        showToast(sound.enabled ? '空灵音效已开启' : '音效已静音');
+      });
+
+      function setZenMode(on) {
+        state.zen = on;
+        if (on) setDrawerOpen(false);
+        hud.classList.toggle('zen-hidden', on);
+        zenExitBtn.classList.toggle('visible', on);
+      }
+
+      zenToggleBtn.addEventListener('click', () => setZenMode(true));
+      zenExitBtn.addEventListener('click', () => setZenMode(false));
+
+      eventTitleInput.addEventListener('input', () => {
+        updateStatusText();
+      });
+
+      finaleTextInput.addEventListener('input', () => {
+        const val = finaleTextInput.value;
+        saveFinaleText(val);
+        if (state.finished) {
+          currentRenderedText = '';
+          morphToText(getFinaleText(), true, true);
+        }
+      });
+
+      previewFinaleBtn.addEventListener('click', () => {
+        sound.unlock();
+        const text = getFinaleText();
+        clearTimeout(previewTimer);
+        state.previewingFinale = true;
+        setDrawerOpen(false);
+        currentRenderedText = '';
+        morphToText(text, true, true);
+        const cx = state.width * 0.5;
+        const cy = state.height * 0.48;
+        spawnShockwave(cx, cy, 240, getTheme().accent, 11);
+        spawnFirework(cx, cy - 30, 50, 5.8);
+        sound.playCelebration();
+        showToast(`正在预览粒子结束文字：${text}`);
+        if (!state.finished) {
+          const dur = state.marqueeActive
+            ? Math.min(15000, Math.max(6000, Math.round(((state.marqueeLoopLen / state.marqueeSpeed) + 1.0) * 1000)))
+            : 3200;
+          previewTimer = setTimeout(() => {
+            state.previewingFinale = false;
+            if (!state.finished) {
+              currentRenderedText = '';
+              morphToText(formatTime(state.remainingMs), true, false);
+            }
+          }, dur);
+        }
+      });
+
+      /* ---------------- iOS-Style Wheel Picker Controller ---------------- */
+      function createWheel(el, maxVal, initVal) {
+        const wheel = {
+          el,
+          max: maxVal,
+          value: initVal,
+          editing: false
+        };
+
+        const wrapVal = (v) => ((v % (maxVal + 1)) + (maxVal + 1)) % (maxVal + 1);
+        const pad2 = (v) => String(v).padStart(2, '0');
+
+        function render() {
+          if (wheel.editing) return;
+          el.innerHTML = '';
+          const offsets = [-2, -1, 0, 1, 2];
+          offsets.forEach((off) => {
+            const v = wrapVal(wheel.value + off);
+            const div = document.createElement('div');
+            div.className = `wheel-item pos-${Math.abs(off)}`;
+            div.textContent = pad2(v);
+            div.addEventListener('click', () => {
+              if (off !== 0) {
+                step(off);
+              }
+            });
+            if (off === 0) {
+              div.title = '双击直接输入数字';
+              div.addEventListener('dblclick', (e) => {
+                e.stopPropagation();
+                openDirectEdit();
+              });
+            }
+            el.appendChild(div);
+          });
+          el.setAttribute('aria-valuenow', String(wheel.value));
+        }
+
+        function step(delta) {
+          if (wheel.editing) return;
+          wheel.value = wrapVal(wheel.value + delta);
+          render();
+          sound.unlock();
+          if (sound.enabled && sound.ctx) {
+            sound.playBell(680 + (wheel.value % 12) * 18, sound.ctx.currentTime, 0.08, 0.022, 0.08);
+          }
+        }
+
+        function openDirectEdit() {
+          wheel.editing = true;
+          const inp = document.createElement('input');
+          inp.type = 'number';
+          inp.min = '0';
+          inp.max = String(maxVal);
+          inp.value = String(wheel.value);
+          inp.className = 'wheel-direct-input';
+          el.appendChild(inp);
+          inp.focus();
+          inp.select();
+
+          const commit = () => {
+            if (!wheel.editing) return;
+            wheel.editing = false;
+            const parsed = parseInt(inp.value, 10);
+            if (!isNaN(parsed)) {
+              wheel.value = Math.max(0, Math.min(maxVal, parsed));
+            }
+            render();
+          };
+
+          inp.addEventListener('blur', commit);
+          inp.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              commit();
+            } else if (e.key === 'Escape') {
+              e.preventDefault();
+              wheel.editing = false;
+              render();
+            }
+          });
+        }
+
+        // Mouse wheel scroll
+        let wheelAccum = 0;
+        el.addEventListener('wheel', (e) => {
+          e.preventDefault();
+          wheelAccum += e.deltaY;
+          if (Math.abs(wheelAccum) >= 28) {
+            step(wheelAccum > 0 ? 1 : -1);
+            wheelAccum = 0;
+          }
+        }, { passive: false });
+
+        // Pointer drag (mouse & touch)
+        let dragging = false;
+        let lastY = 0;
+        let dragAccum = 0;
+        el.addEventListener('pointerdown', (e) => {
+          if (wheel.editing) return;
+          dragging = true;
+          lastY = e.clientY;
+          dragAccum = 0;
+          el.setPointerCapture(e.pointerId);
+        });
+        el.addEventListener('pointermove', (e) => {
+          if (!dragging) return;
+          const dy = e.clientY - lastY;
+          lastY = e.clientY;
+          dragAccum += dy;
+          if (Math.abs(dragAccum) >= 26) {
+            step(dragAccum > 0 ? -1 : 1);
+            dragAccum = 0;
+          }
+        });
+        const stopDrag = () => { dragging = false; };
+        el.addEventListener('pointerup', stopDrag);
+        el.addEventListener('pointercancel', stopDrag);
+
+        wheel.setValue = (v) => {
+          wheel.editing = false;
+          wheel.value = Math.max(0, Math.min(maxVal, v));
+          render();
+        };
+
+        render();
+        return wheel;
+      }
+
+      const wheelH = createWheel(wheelHoursEl, 23, 0);
+      const wheelM = createWheel(wheelMinutesEl, 59, 1);
+      const wheelS = createWheel(wheelSecondsEl, 59, 0);
+
+      function openCustomModal() {
+        setDrawerOpen(false);
+        const curSec = Math.max(0, Math.ceil(state.remainingMs / 1000));
+        wheelH.setValue(Math.floor(curSec / 3600));
+        wheelM.setValue(Math.floor((curSec % 3600) / 60));
+        wheelS.setValue(curSec % 60);
+        customModal.classList.add('open');
+        customModal.setAttribute('aria-hidden', 'false');
+      }
+
+      function closeCustomModal() {
+        customModal.classList.remove('open');
+        customModal.setAttribute('aria-hidden', 'true');
+      }
+
+      customTimeBtn.addEventListener('click', openCustomModal);
+      closeModalBtn.addEventListener('click', closeCustomModal);
+      cancelModalBtn.addEventListener('click', closeCustomModal);
+      customModal.addEventListener('click', (e) => {
+        if (e.target === customModal) closeCustomModal();
+      });
+
+      applyCustomBtn.addEventListener('click', () => {
+        const total = wheelH.value * 3600 + wheelM.value * 60 + wheelS.value;
+        if (total <= 0) {
+          showToast('请至少设置 1 秒');
+          return;
+        }
+        setPreset(total, false);
+        closeCustomModal();
+        showToast(`已设定倒计时 ${formatTime(total * 1000)}`);
+      });
+
+      window.addEventListener('keydown', (e) => {
+        if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA')) {
+          if (e.key === 'Escape') {
+            document.activeElement.blur();
+            closeCustomModal();
+          }
+          return;
+        }
+        if (e.code === 'Space') {
+          e.preventDefault();
+          togglePlayPause();
+        } else if (e.key === 'r' || e.key === 'R') {
+          resetTimer();
+        } else if (e.key === 'm' || e.key === 'M') {
+          soundToggleBtn.click();
+        } else if (e.key === 'f' || e.key === 'F') {
+          setZenMode(!state.zen);
+        } else if (e.key === 'Escape') {
+          if (customModal.classList.contains('open')) closeCustomModal();
+          else if (state.drawerOpen) setDrawerOpen(false);
+          else if (state.zen) setZenMode(false);
+        }
+      });
+
+      /* ---------------- Init ---------------- */
+      window.addEventListener('resize', resizeCanvas);
+      window.addEventListener('load', () => {
+        try {
+          const savedTheme = localStorage.getItem('stardust_timer_theme');
+          if (savedTheme && THEMES[savedTheme]) applyTheme(savedTheme);
+          const savedFinale = localStorage.getItem('stardust_timer_finale_text');
+          if (savedFinale !== null) {
+            finaleTextInput.value = savedFinale;
+          }
+        } catch (e) {}
+
+        resizeCanvas();
+        updateStatusText();
+        updateNovaUI();
+        if (animFrameId) cancelAnimationFrame(animFrameId);
+        animFrameId = requestAnimationFrame(animate);
+      });
+    })();
+  </script>
+</body>
+</html>
