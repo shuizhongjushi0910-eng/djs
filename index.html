@@ -6,17 +6,28 @@
   <title>星尘倒计时 · 粒子互动计时器</title>
   <style>
     :root {
-      --bg-0: #0c1118;
-      --bg-1: #16202e;
-      --accent: #67e8f9;
-      --accent-2: #60a5fa;
-      --text: #f1f5f9;
-      --muted: rgba(203, 213, 225, 0.65);
-      --glass: rgba(15, 23, 36, 0.54);
-      --glass-strong: rgba(15, 23, 36, 0.88);
-      --glass-border: rgba(255, 255, 255, 0.11);
-      --glass-hover: rgba(255, 255, 255, 0.14);
-      --shadow: 0 12px 32px rgba(0, 0, 0, 0.34);
+      --bg-0: #edf2fa;
+      --bg-1: #ffffff;
+      --accent: #007aff;
+      --accent-2: #5ac8fa;
+      --text: #1d1d1f;
+      --muted: rgba(29, 29, 31, 0.56);
+      --glass: rgba(255, 255, 255, 0.38);
+      --glass-strong: rgba(255, 255, 255, 0.46);
+      --glass-border: rgba(255, 255, 255, 0.72);
+      --glass-stroke: rgba(15, 23, 42, 0.07);
+      --glass-hover: rgba(255, 255, 255, 0.62);
+      --btn-bg: rgba(15, 23, 42, 0.055);
+      --btn-hover: rgba(15, 23, 42, 0.1);
+      --chip-active-bg: rgba(0, 122, 255, 0.12);
+      --chip-active-text: #007aff;
+      --primary-text: #ffffff;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04);
+      --modal-backdrop: rgba(15, 23, 42, 0.1);
+      --wheel-stage-bg: rgba(255, 255, 255, 0.22);
+      --wheel-band-bg: rgba(255, 255, 255, 0.52);
+      --wheel-band-border: rgba(255, 255, 255, 0.75);
+      --wheel-input-bg: rgba(255, 255, 255, 0.68);
     }
 
     * {
@@ -30,10 +41,11 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: radial-gradient(circle at 50% 45%, var(--bg-1) 0%, var(--bg-0) 76%);
+      background: radial-gradient(circle at 50% 44%, var(--bg-1) 0%, var(--bg-0) 80%);
       color: var(--text);
-      font-family: "Inter", -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "PingFang SC", "Helvetica Neue", "Microsoft YaHei", sans-serif;
       user-select: none;
+      -webkit-font-smoothing: antialiased;
     }
 
     #stage {
@@ -46,15 +58,7 @@
       touch-action: none;
     }
 
-    .vignette {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      background: radial-gradient(circle at center, transparent 54%, rgba(6, 10, 16, 0.35) 100%);
-      z-index: 2;
-    }
-
-    /* Ultra-clean HUD */
+    /* Ultra-clean Apple HUD */
     .hud {
       position: fixed;
       inset: 0;
@@ -85,11 +89,11 @@
 
     .glass-pill {
       background: var(--glass);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
       border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow), inset 0 0 0 0.5px var(--glass-stroke);
       border-radius: 999px;
-      box-shadow: var(--shadow);
     }
 
     .brand-cluster {
@@ -104,6 +108,17 @@
       align-items: center;
       gap: 8px;
       padding: 6px 14px;
+      cursor: text;
+      transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .title-chip:hover {
+      background: var(--glass-hover);
+    }
+
+    .title-chip:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.16), var(--shadow);
     }
 
     .pulse-dot {
@@ -111,9 +126,8 @@
       height: 7px;
       border-radius: 50%;
       background: var(--accent);
-      box-shadow: 0 0 10px var(--accent);
       flex-shrink: 0;
-      transition: background 0.3s ease, box-shadow 0.3s ease;
+      transition: background 0.3s ease;
     }
 
     .pulse-dot.running {
@@ -122,7 +136,7 @@
 
     @keyframes dotPulse {
       0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.35); opacity: 0.55; }
+      50% { transform: scale(1.38); opacity: 0.45; }
     }
 
     .event-title-input {
@@ -132,8 +146,8 @@
       color: var(--text);
       font-size: 13px;
       font-weight: 500;
-      width: 96px;
-      letter-spacing: 0.04em;
+      width: 120px;
+      letter-spacing: 0.01em;
     }
 
     .event-title-input::placeholder {
@@ -168,14 +182,13 @@
       font-weight: 600;
       padding: 1px 6px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.08);
+      background: var(--chip-active-bg);
       color: var(--accent);
-      transition: transform 0.18s ease, background 0.2s ease;
+      transition: transform 0.18s ease;
     }
 
     .combo-badge.pop {
-      transform: scale(1.22);
-      background: rgba(255, 255, 255, 0.2);
+      transform: scale(1.2);
     }
 
     .nova-wrap {
@@ -188,7 +201,7 @@
       width: 52px;
       height: 5px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.14);
+      background: var(--btn-bg);
       overflow: hidden;
     }
 
@@ -201,8 +214,8 @@
     }
 
     .nova-btn {
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      background: rgba(255, 255, 255, 0.06);
+      border: none;
+      background: var(--btn-bg);
       color: var(--muted);
       font-size: 11px;
       font-weight: 600;
@@ -214,16 +227,15 @@
     }
 
     .nova-btn.ready {
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      color: #0c1118;
-      border-color: transparent;
-      box-shadow: 0 0 14px var(--accent);
+      background: var(--accent);
+      color: var(--primary-text);
+      box-shadow: 0 3px 12px rgba(0, 122, 255, 0.32);
     }
 
     .top-actions {
       display: flex;
       align-items: center;
-      gap: 7px;
+      gap: 8px;
       pointer-events: auto;
     }
 
@@ -233,25 +245,23 @@
       border-radius: 50%;
       border: 1px solid var(--glass-border);
       background: var(--glass);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      color: rgba(241, 245, 249, 0.82);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      color: var(--muted);
       display: inline-flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
       transition: all 0.2s ease;
-      box-shadow: var(--shadow);
+      box-shadow: var(--shadow), inset 0 0 0 0.5px var(--glass-stroke);
     }
 
     .icon-btn:hover {
       background: var(--glass-hover);
-      color: #ffffff;
-      border-color: rgba(255, 255, 255, 0.25);
+      color: var(--text);
     }
 
     .icon-btn.active {
-      border-color: rgba(255, 255, 255, 0.24);
       color: var(--accent);
     }
 
@@ -267,11 +277,9 @@
     }
 
     .status-tag {
-      font-size: 11px;
-      letter-spacing: 0.26em;
-      text-transform: uppercase;
-      color: var(--accent);
-      opacity: 0.78;
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      color: var(--muted);
       font-weight: 500;
     }
 
@@ -288,12 +296,12 @@
     .drawer-popover {
       pointer-events: auto;
       background: var(--glass-strong);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      border-radius: 22px;
-      padding: 14px 16px;
-      box-shadow: 0 20px 56px rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(32px) saturate(195%);
+      -webkit-backdrop-filter: blur(32px) saturate(195%);
+      border: 1px solid var(--glass-border);
+      border-radius: 24px;
+      padding: 15px 18px;
+      box-shadow: 0 20px 52px rgba(15, 23, 42, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.45);
       width: min(560px, calc(100vw - 24px));
       display: flex;
       flex-direction: column;
@@ -321,10 +329,10 @@
     }
 
     .drawer-label {
-      font-size: 11px;
+      font-size: 12px;
       color: var(--muted);
-      letter-spacing: 0.06em;
-      min-width: 56px;
+      font-weight: 500;
+      min-width: 58px;
     }
 
     .drawer-controls {
@@ -340,8 +348,8 @@
       align-items: center;
       gap: 8px;
       flex: 1;
-      background: rgba(255, 255, 255, 0.06);
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: var(--btn-bg);
+      border: 1px solid var(--glass-stroke);
       border-radius: 12px;
       padding: 4px 6px 4px 11px;
     }
@@ -362,12 +370,12 @@
     }
 
     .mini-preview-btn {
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      background: rgba(255, 255, 255, 0.09);
+      border: none;
+      background: var(--chip-active-bg);
       color: var(--accent);
       font-size: 11px;
       font-weight: 600;
-      padding: 4px 10px;
+      padding: 5px 11px;
       border-radius: 999px;
       cursor: pointer;
       transition: all 0.18s ease;
@@ -375,19 +383,19 @@
     }
 
     .mini-preview-btn:hover {
-      background: rgba(255, 255, 255, 0.18);
-      border-color: var(--accent);
+      background: var(--accent);
+      color: var(--primary-text);
     }
 
     .dock-panel {
       pointer-events: auto;
       background: var(--glass);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
+      backdrop-filter: blur(26px) saturate(180%);
+      -webkit-backdrop-filter: blur(26px) saturate(180%);
       border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow), inset 0 0 0 0.5px var(--glass-stroke);
       border-radius: 999px;
-      padding: 6px 10px;
-      box-shadow: var(--shadow);
+      padding: 6px 8px;
       display: flex;
       align-items: center;
       gap: 6px;
@@ -397,12 +405,12 @@
     }
 
     .btn {
-      border: 1px solid transparent;
-      background: rgba(255, 255, 255, 0.07);
-      color: rgba(241, 245, 249, 0.92);
-      font-size: 12px;
+      border: none;
+      background: var(--btn-bg);
+      color: var(--text);
+      font-size: 13px;
       font-weight: 500;
-      padding: 7px 12px;
+      padding: 7px 14px;
       border-radius: 999px;
       cursor: pointer;
       display: inline-flex;
@@ -413,8 +421,7 @@
     }
 
     .btn:hover {
-      background: rgba(255, 255, 255, 0.15);
-      color: #ffffff;
+      background: var(--btn-hover);
     }
 
     .btn:active {
@@ -422,23 +429,37 @@
     }
 
     .btn-primary {
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      color: #0b111a;
-      font-weight: 700;
+      background: var(--accent);
+      color: var(--primary-text);
+      font-weight: 600;
       padding: 8px 18px;
-      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+      box-shadow: 0 4px 14px rgba(0, 122, 255, 0.28);
     }
 
     .btn-primary:hover {
       filter: brightness(1.06);
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      color: #0b111a;
+      background: var(--accent);
+      color: var(--primary-text);
+    }
+
+    .btn-glass-accent {
+      background: var(--accent);
+      color: #ffffff;
+      font-weight: 600;
+      padding: 8px 22px;
+      box-shadow: 0 4px 14px rgba(0, 122, 255, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+    }
+
+    .btn-glass-accent:hover {
+      filter: brightness(1.06);
+      background: var(--accent);
+      color: #ffffff;
     }
 
     .btn-chip {
-      padding: 5px 10px;
+      padding: 5px 11px;
       font-size: 12px;
-      background: rgba(255, 255, 255, 0.06);
+      background: var(--btn-bg);
       color: var(--muted);
     }
 
@@ -447,31 +468,32 @@
     }
 
     .btn-chip.active {
-      background: rgba(255, 255, 255, 0.16);
-      color: #ffffff;
-      border-color: rgba(255, 255, 255, 0.26);
+      background: var(--chip-active-bg);
+      color: var(--chip-active-text);
+      font-weight: 600;
     }
 
     .divider {
       width: 1px;
       height: 18px;
-      background: rgba(255, 255, 255, 0.12);
+      background: var(--glass-stroke);
       margin: 0 2px;
     }
 
     .swatch-group {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 9px;
     }
 
     .swatch {
       width: 22px;
       height: 22px;
       border-radius: 50%;
-      border: 2px solid rgba(255, 255, 255, 0.22);
+      border: 2px solid rgba(255, 255, 255, 0.9);
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.16);
       cursor: pointer;
-      transition: transform 0.2s ease, border-color 0.2s ease;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
     .swatch:hover {
@@ -479,19 +501,53 @@
     }
 
     .swatch.active {
-      border-color: #ffffff;
       transform: scale(1.16);
-      box-shadow: 0 0 10px rgba(255, 255, 255, 0.45);
+      box-shadow: 0 0 0 2px var(--accent), 0 3px 10px rgba(15, 23, 42, 0.18);
     }
 
-    /* Custom Time Modal */
+    .style-chip {
+      padding: 5px 11px;
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--btn-bg);
+      color: var(--muted);
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.18s ease;
+    }
+
+    .style-chip:hover {
+      color: var(--text);
+      background: var(--btn-hover);
+    }
+
+    .style-chip.active {
+      background: var(--chip-active-bg);
+      color: var(--chip-active-text);
+      font-weight: 600;
+    }
+
+    .style-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
+    }
+
+
+
+    /* Apple Frosted Glass Time Picker Modal */
     .modal-backdrop {
       position: fixed;
       inset: 0;
       z-index: 30;
-      background: rgba(8, 12, 18, 0.62);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      background: var(--modal-backdrop);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -508,12 +564,14 @@
 
     .modal-card {
       width: 100%;
-      max-width: 360px;
+      max-width: 348px;
       background: var(--glass-strong);
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      border-radius: 24px;
-      padding: 20px;
-      box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(34px) saturate(200%);
+      -webkit-backdrop-filter: blur(34px) saturate(200%);
+      border: 1px solid var(--glass-border);
+      border-radius: 26px;
+      padding: 20px 22px;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.55);
       transform: translateY(10px) scale(0.97);
       transition: transform 0.22s ease;
     }
@@ -526,70 +584,84 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
 
     .modal-title {
-      font-size: 15px;
+      font-size: 16px;
       font-weight: 600;
+      letter-spacing: -0.01em;
     }
 
-    .wheel-picker-wrap {
-      position: relative;
+    .wheel-labels-row {
       display: grid;
-      grid-template-columns: 1fr auto 1fr auto 1fr;
+      grid-template-columns: 1fr 16px 1fr 16px 1fr;
       align-items: center;
-      gap: 4px;
-      margin: 6px 0 14px;
-      padding: 8px 6px;
-      border-radius: 18px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-
-    .wheel-highlight-band {
-      position: absolute;
-      left: 10px;
-      right: 10px;
-      top: 50%;
-      height: 44px;
-      transform: translateY(-50%);
-      border-radius: 12px;
-      background: rgba(255, 255, 255, 0.07);
-      border-top: 1px solid rgba(255, 255, 255, 0.16);
-      border-bottom: 1px solid rgba(255, 255, 255, 0.16);
-      pointer-events: none;
-    }
-
-    .wheel-col {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      position: relative;
-      z-index: 2;
+      text-align: center;
+      margin-bottom: 6px;
+      padding: 0 8px;
     }
 
     .wheel-unit {
       font-size: 11px;
+      font-weight: 500;
       color: var(--muted);
-      letter-spacing: 0.08em;
-      margin-bottom: 2px;
+      letter-spacing: 0.06em;
+    }
+
+    .wheel-stage {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr 16px 1fr 16px 1fr;
+      align-items: center;
+      height: 180px;
+      padding: 0 8px;
+      margin-bottom: 12px;
+      border-radius: 18px;
+      background: var(--wheel-stage-bg);
+      border: 1px solid var(--glass-stroke);
+      overflow: hidden;
+    }
+
+    .wheel-highlight-band {
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      top: 72px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--wheel-band-bg);
+      border: 1px solid var(--wheel-band-border);
+      box-shadow: 0 2px 8px rgba(15, 23, 42, 0.05);
+      pointer-events: none;
+      z-index: 1;
     }
 
     .wheel-drum {
       position: relative;
       width: 100%;
-      height: 176px;
+      height: 180px;
       overflow: hidden;
       cursor: ns-resize;
       touch-action: none;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 26%, black 74%, transparent 100%);
-      mask-image: linear-gradient(to bottom, transparent 0%, black 26%, black 74%, transparent 100%);
+      justify-content: flex-start;
+      z-index: 2;
+      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.45) 20%, black 42%, black 58%, rgba(0,0,0,0.45) 80%, transparent 100%);
+      mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.45) 20%, black 42%, black 58%, rgba(0,0,0,0.45) 80%, transparent 100%);
+    }
+
+    .wheel-drum.editing {
+      -webkit-mask-image: none;
+      mask-image: none;
+    }
+
+    /* Hide center item completely while typing so there is ZERO ghosting! */
+    .wheel-drum.editing .wheel-item.pos-0 {
+      opacity: 0;
+      visibility: hidden;
     }
 
     .wheel-item {
@@ -598,57 +670,65 @@
       width: 100%;
       text-align: center;
       font-variant-numeric: tabular-nums;
-      transition: transform 0.12s ease, opacity 0.12s ease, color 0.12s ease;
+      transition: color 0.12s ease, opacity 0.12s ease;
       cursor: pointer;
+      flex-shrink: 0;
     }
 
     .wheel-item.pos-0 {
-      height: 44px;
-      line-height: 44px;
-      font-size: 28px;
-      font-weight: 700;
-      color: #ffffff;
-      text-shadow: 0 0 14px rgba(103, 232, 249, 0.35);
+      font-size: 25px;
+      font-weight: 600;
+      color: var(--text);
+      cursor: text;
     }
 
     .wheel-item.pos-1 {
-      font-size: 19px;
+      font-size: 18px;
       font-weight: 500;
-      color: rgba(226, 232, 240, 0.55);
+      color: var(--muted);
+      opacity: 0.78;
     }
 
     .wheel-item.pos-2 {
       font-size: 14px;
       font-weight: 400;
-      color: rgba(226, 232, 240, 0.24);
+      color: var(--muted);
+      opacity: 0.36;
     }
 
     .wheel-colon {
+      height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 22px;
-      font-weight: 700;
-      color: rgba(226, 232, 240, 0.45);
-      padding-top: 18px;
+      font-weight: 600;
+      color: var(--muted);
       z-index: 2;
+      padding-bottom: 2px;
     }
 
     .wheel-direct-input {
       position: absolute;
       left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      width: 68px;
-      height: 40px;
+      top: 72px;
+      transform: translateX(-50%);
+      width: 72px;
+      height: 36px;
+      line-height: 36px;
       text-align: center;
-      background: rgba(12, 18, 30, 0.96);
-      border: 1px solid var(--accent);
+      background: var(--wheel-input-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1.5px solid var(--accent);
       border-radius: 10px;
-      color: #ffffff;
-      font-size: 26px;
-      font-weight: 700;
+      color: var(--text);
+      font-size: 24px;
+      font-weight: 600;
       font-variant-numeric: tabular-nums;
       outline: none;
-      z-index: 5;
-      box-shadow: 0 0 0 3px rgba(103, 232, 249, 0.18);
+      z-index: 6;
+      box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.18);
       -moz-appearance: textfield;
     }
 
@@ -662,7 +742,7 @@
       text-align: center;
       font-size: 11px;
       color: var(--muted);
-      margin-bottom: 14px;
+      margin-bottom: 16px;
     }
 
     .modal-footer {
@@ -682,7 +762,7 @@
     }
 
     .zen-exit-btn.visible {
-      opacity: 0.78;
+      opacity: 0.85;
       pointer-events: auto;
     }
 
@@ -699,14 +779,16 @@
       padding: 7px 16px;
       border-radius: 999px;
       background: var(--glass-strong);
-      border: 1px solid rgba(255, 255, 255, 0.16);
+      backdrop-filter: blur(26px) saturate(185%);
+      -webkit-backdrop-filter: blur(26px) saturate(185%);
+      border: 1px solid var(--glass-border);
       color: var(--text);
       font-size: 12px;
       font-weight: 500;
       opacity: 0;
       pointer-events: none;
       transition: all 0.25s ease;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+      box-shadow: var(--shadow);
       white-space: nowrap;
     }
 
@@ -737,7 +819,6 @@
 </head>
 <body>
   <canvas id="stage"></canvas>
-  <div class="vignette"></div>
 
   <div class="center-banner" id="centerBanner">
     <div class="status-tag" id="statusTag">专注冲刺 · 已就绪</div>
@@ -746,18 +827,18 @@
   <div class="hud" id="hud">
     <header class="top-bar">
       <div class="brand-cluster">
-        <div class="glass-pill title-chip">
+        <label class="glass-pill title-chip" for="eventTitleInput" title="点击自定义倒计时名称">
           <span class="pulse-dot" id="pulseDot"></span>
           <input
             type="text"
             id="eventTitleInput"
             class="event-title-input"
             value="专注冲刺"
-            maxlength="14"
-            aria-label="倒计时主题名称"
-            placeholder="输入主题..."
+            maxlength="20"
+            aria-label="自定义倒计时名称"
+            placeholder="点击输入名称..."
           />
-        </div>
+        </label>
       </div>
 
       <div class="glass-pill game-hud" title="捕获飘过的星辰碎片，积累星尘与超新星能量">
@@ -816,15 +897,27 @@
         </div>
 
         <div class="drawer-row">
-          <span class="drawer-label">主题色调</span>
-          <div class="drawer-controls">
-            <div class="swatch-group" id="themeSwatches" role="group" aria-label="配色主题">
-              <button class="swatch active" data-theme="cyber" type="button" title="静谧深海" style="background: linear-gradient(135deg, #67e8f9, #60a5fa);"></button>
-              <button class="swatch" data-theme="solar" type="button" title="暖茶琥珀" style="background: linear-gradient(135deg, #fbbf24, #fb923c);"></button>
-              <button class="swatch" data-theme="aurora" type="button" title="松林青岚" style="background: linear-gradient(135deg, #5eead4, #34d399);"></button>
-              <button class="swatch" data-theme="sakura" type="button" title="暖樱微光" style="background: linear-gradient(135deg, #fda4af, #fcd34d);"></button>
-              <button class="swatch" data-theme="cosmos" type="button" title="炭灰银霜" style="background: linear-gradient(135deg, #f1f5f9, #94a3b8);"></button>
-            </div>
+          <span class="drawer-label">视觉风格</span>
+          <div class="drawer-controls" id="themeSwatches" role="group" aria-label="视觉风格">
+            <button class="style-chip active" data-theme="cyber" type="button">
+              <span class="style-dot" style="background: linear-gradient(135deg, #e8f1fc, #007aff);"></span>苹果晴空
+            </button>
+            <button class="style-chip" data-theme="cosmos" type="button">
+              <span class="style-dot" style="background: linear-gradient(135deg, #1b2434, #64d2ff);"></span>午夜星岩
+            </button>
+          </div>
+        </div>
+
+        <div class="drawer-row">
+          <span class="drawer-label">色调选择</span>
+          <div class="drawer-controls swatch-group" id="colorSwatches" role="group" aria-label="色调选择">
+            <button class="swatch active" data-color="default" type="button" title="主题原色" style="background: linear-gradient(135deg, #f8fafc, #94a3b8);"></button>
+            <button class="swatch" data-color="sky" type="button" title="晴空蓝" style="background: linear-gradient(135deg, #0066e6, #54b2ff);"></button>
+            <button class="swatch" data-color="coral" type="button" title="暖阳橙" style="background: linear-gradient(135deg, #e06000, #ffa347);"></button>
+            <button class="swatch" data-color="emerald" type="button" title="松翠绿" style="background: linear-gradient(135deg, #059669, #34d399);"></button>
+            <button class="swatch" data-color="rose" type="button" title="樱雾粉" style="background: linear-gradient(135deg, #db2777, #f472b6);"></button>
+            <button class="swatch" data-color="iris" type="button" title="星云紫" style="background: linear-gradient(135deg, #4f46e5, #958cf8);"></button>
+            <button class="swatch" data-color="amber" type="button" title="香槟金" style="background: linear-gradient(135deg, #a3701d, #dfb256);"></button>
           </div>
         </div>
 
@@ -874,7 +967,7 @@
         <span class="divider"></span>
 
         <button class="btn" id="customizeToggleBtn" type="button" title="展开配色、玩法、时长与结束文字设置">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="3"/>
             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c.26.604.852.997 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
           </svg>
@@ -900,27 +993,25 @@
           </svg>
         </button>
       </div>
-      <div class="wheel-picker-wrap">
-        <div class="wheel-highlight-band"></div>
-        <div class="wheel-col">
-          <span class="wheel-unit">小时</span>
-          <div class="wheel-drum" id="wheelHours" data-max="23" role="spinbutton" aria-label="小时"></div>
-        </div>
-        <span class="wheel-colon">:</span>
-        <div class="wheel-col">
-          <span class="wheel-unit">分钟</span>
-          <div class="wheel-drum" id="wheelMinutes" data-max="59" role="spinbutton" aria-label="分钟"></div>
-        </div>
-        <span class="wheel-colon">:</span>
-        <div class="wheel-col">
-          <span class="wheel-unit">秒</span>
-          <div class="wheel-drum" id="wheelSeconds" data-max="59" role="spinbutton" aria-label="秒"></div>
-        </div>
+      <div class="wheel-labels-row">
+        <span class="wheel-unit">小时</span>
+        <span></span>
+        <span class="wheel-unit">分钟</span>
+        <span></span>
+        <span class="wheel-unit">秒</span>
       </div>
-      <div class="wheel-tip">滚动鼠标或上下拖拽调节 · 双击中间数字可直接输入</div>
+      <div class="wheel-stage">
+        <div class="wheel-highlight-band"></div>
+        <div class="wheel-drum" id="wheelHours" data-max="23" role="spinbutton" aria-label="小时"></div>
+        <span class="wheel-colon">:</span>
+        <div class="wheel-drum" id="wheelMinutes" data-max="59" role="spinbutton" aria-label="分钟"></div>
+        <span class="wheel-colon">:</span>
+        <div class="wheel-drum" id="wheelSeconds" data-max="59" role="spinbutton" aria-label="秒"></div>
+      </div>
+      <div class="wheel-tip">滚动或拖拽调节 · 点击中间数字可直接输入</div>
       <div class="modal-footer">
         <button class="btn" id="cancelModalBtn" type="button">取消</button>
-        <button class="btn btn-primary" id="applyCustomBtn" type="button">应用时间</button>
+        <button class="btn btn-glass-accent" id="applyCustomBtn" type="button">完成</button>
       </div>
     </div>
   </div>
@@ -929,56 +1020,42 @@
     (function () {
       'use strict';
 
-      /* ---------------- Clean, Serene, Non-Muddy Themes ---------------- */
+      /* ---------------- Apple-Inspired Airy Light & Midnight Themes ---------------- */
+      const COLOR_PRESETS = {
+        sky:     { name: '晴空蓝', accent: '#007aff', accent2: '#54b2ff', palette: ['#0066e6', '#007aff', '#2693ff', '#54b2ff', '#7cc8ff'] },
+        coral:   { name: '暖阳橙', accent: '#f06c00', accent2: '#ffa347', palette: ['#d95800', '#f06c00', '#ff851b', '#ffa347', '#ffc078'] },
+        emerald: { name: '松翠绿', accent: '#059669', accent2: '#34d399', palette: ['#047857', '#059669', '#10b981', '#34d399', '#6ee7b7'] },
+        rose:    { name: '樱雾粉', accent: '#db2777', accent2: '#f472b6', palette: ['#be185d', '#db2777', '#ec4899', '#f472b6', '#f9a8d4'] },
+        iris:    { name: '星云紫', accent: '#6366f1', accent2: '#958cf8', palette: ['#4f46e5', '#6366f1', '#7c72f5', '#958cf8', '#b4aefb'] },
+        amber:   { name: '香槟金', accent: '#b47f28', accent2: '#dfb256', palette: ['#926314', '#b47f28', '#cc993a', '#dfb256', '#ecc97c'] }
+      };
+
       const THEMES = {
         cyber: {
-          name: '静谧深海',
-          bg0: '#0b1118',
-          bg1: '#152232',
-          fadeRgb: '12, 18, 27',
-          accent: '#67e8f9',
-          accent2: '#60a5fa',
-          palette: ['#67e8f9', '#7dd3fc', '#60a5fa', '#bae6fd', '#f0f9ff']
-        },
-        solar: {
-          name: '暖茶琥珀',
-          bg0: '#14100c',
-          bg1: '#261d14',
-          fadeRgb: '21, 16, 12',
-          accent: '#fbbf24',
-          accent2: '#fb923c',
-          palette: ['#fde68a', '#fbbf24', '#fb923c', '#fdba74', '#fffbeb']
-        },
-        aurora: {
-          name: '松林青岚',
-          bg0: '#0a1414',
-          bg1: '#132726',
-          fadeRgb: '11, 22, 22',
-          accent: '#5eead4',
-          accent2: '#34d399',
-          palette: ['#5eead4', '#6ee7b7', '#34d399', '#99f6e4', '#ecfdf5']
-        },
-        sakura: {
-          name: '暖樱微光',
-          bg0: '#161013',
-          bg1: '#291c22',
-          fadeRgb: '23, 17, 20',
-          accent: '#fda4af',
-          accent2: '#fcd34d',
-          palette: ['#fecdd3', '#fda4af', '#f9a8d4', '#fde68a', '#fff1f2']
+          name: '苹果晴空',
+          styleType: 'apple',
+          isLight: true,
+          bg0: '#e8eff9',
+          bg1: '#fbfdff',
+          fadeRgb: '238, 244, 252',
+          accent: '#007aff',
+          accent2: '#54b2ff',
+          palette: ['#0066e6', '#007aff', '#2693ff', '#54b2ff', '#7cc8ff']
         },
         cosmos: {
-          name: '炭灰银霜',
-          bg0: '#111317',
-          bg1: '#1f232b',
-          fadeRgb: '18, 20, 25',
-          accent: '#e2e8f0',
-          accent2: '#94a3b8',
-          palette: ['#ffffff', '#e2e8f0', '#cbd5e1', '#94a3b8', '#f8fafc']
+          name: '午夜星岩',
+          styleType: 'cosmos',
+          isLight: false,
+          bg0: '#0b111d',
+          bg1: '#172338',
+          fadeRgb: '13, 19, 31',
+          accent: '#64d2ff',
+          accent2: '#bae6fd',
+          palette: ['#38bdf8', '#64d2ff', '#93e2ff', '#bae6fd', '#e0f2fe']
         }
       };
 
-      /* ---------------- Ethereal Musical Sound Engine ---------------- */
+      /* ---------------- Clean Apple-Style Sound Engine ---------------- */
       class SoundEngine {
         constructor() {
           this.ctx = null;
@@ -1003,14 +1080,14 @@
             this.master.connect(comp);
 
             const delay = this.ctx.createDelay(1.0);
-            delay.delayTime.value = 0.24;
+            delay.delayTime.value = 0.22;
             const fb = this.ctx.createGain();
-            fb.gain.value = 0.34;
+            fb.gain.value = 0.26;
             const lp = this.ctx.createBiquadFilter();
             lp.type = 'lowpass';
-            lp.frequency.value = 2400;
+            lp.frequency.value = 2200;
             const wet = this.ctx.createGain();
-            wet.gain.value = 0.32;
+            wet.gain.value = 0.24;
 
             this.delaySend = this.ctx.createGain();
             this.delaySend.gain.value = 1.0;
@@ -1026,45 +1103,51 @@
           }
         }
 
-        playBell(freq, startTime, duration = 0.7, volume = 0.08, sendEcho = 0.5) {
+        // Crisp subtle iOS mechanical micro-click
+        playWheelClick() {
+          if (!this.enabled) return;
+          this.unlock();
+          if (!this.ctx || !this.master) return;
+          const t = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(1150, t);
+          osc.frequency.exponentialRampToValueAtTime(320, t + 0.015);
+          gain.gain.setValueAtTime(0.0001, t);
+          gain.gain.linearRampToValueAtTime(0.022, t + 0.002);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.017);
+          osc.connect(gain);
+          gain.connect(this.master);
+          osc.start(t);
+          osc.stop(t + 0.02);
+        }
+
+        // Pure warm sine chime
+        playBell(freq, startTime, duration = 0.6, volume = 0.065, sendEcho = 0.3) {
           if (!this.ctx || !this.master) return;
           const t = startTime;
+          const osc = this.ctx.createOscillator();
+          const g = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, t);
 
-          const osc1 = this.ctx.createOscillator();
-          const osc2 = this.ctx.createOscillator();
-          const g1 = this.ctx.createGain();
-          const g2 = this.ctx.createGain();
+          g.gain.setValueAtTime(0.0001, t);
+          g.gain.linearRampToValueAtTime(volume, t + 0.014);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + duration);
 
-          osc1.type = 'sine';
-          osc1.frequency.setValueAtTime(freq, t);
-
-          osc2.type = 'triangle';
-          osc2.frequency.setValueAtTime(freq * 2.002, t);
-
-          g1.gain.setValueAtTime(0.0001, t);
-          g1.gain.linearRampToValueAtTime(volume, t + 0.012);
-          g1.gain.exponentialRampToValueAtTime(0.0001, t + duration);
-
-          g2.gain.setValueAtTime(0.0001, t);
-          g2.gain.linearRampToValueAtTime(volume * 0.2, t + 0.01);
-          g2.gain.exponentialRampToValueAtTime(0.0001, t + duration * 0.55);
-
-          osc1.connect(g1);
-          osc2.connect(g2);
-          g1.connect(this.master);
-          g2.connect(this.master);
+          osc.connect(g);
+          g.connect(this.master);
 
           if (sendEcho > 0 && this.delaySend) {
             const send = this.ctx.createGain();
             send.gain.value = sendEcho;
-            g1.connect(send);
+            g.connect(send);
             send.connect(this.delaySend);
           }
 
-          osc1.start(t);
-          osc2.start(t);
-          osc1.stop(t + duration + 0.04);
-          osc2.stop(t + duration * 0.6 + 0.04);
+          osc.start(t);
+          osc.stop(t + duration + 0.04);
         }
 
         playTick(urgent = false, secLeft = 10) {
@@ -1073,23 +1156,11 @@
           if (!this.ctx) return;
           const now = this.ctx.currentTime;
           if (!urgent) {
-            this.playBell(587.33, now, 0.22, 0.03, 0.22);
+            this.playBell(587.33, now, 0.2, 0.026, 0.18);
           } else {
             const scale = [523.25, 587.33, 659.25, 739.99, 783.99, 880.0, 987.77, 1046.5, 1174.66, 1318.5];
             const idx = Math.max(0, Math.min(scale.length - 1, 10 - secLeft));
-            this.playBell(scale[idx], now, 0.55, 0.072, 0.55);
-            const sub = this.ctx.createOscillator();
-            const sg = this.ctx.createGain();
-            sub.type = 'sine';
-            sub.frequency.setValueAtTime(110, now);
-            sub.frequency.exponentialRampToValueAtTime(55, now + 0.22);
-            sg.gain.setValueAtTime(0.001, now);
-            sg.gain.linearRampToValueAtTime(0.055, now + 0.015);
-            sg.gain.exponentialRampToValueAtTime(0.0001, now + 0.26);
-            sub.connect(sg);
-            sg.connect(this.master);
-            sub.start(now);
-            sub.stop(now + 0.28);
+            this.playBell(scale[idx], now, 0.5, 0.065, 0.4);
           }
         }
 
@@ -1098,21 +1169,8 @@
           this.unlock();
           if (!this.ctx) return;
           const now = this.ctx.currentTime;
-          const sub = this.ctx.createOscillator();
-          const gain = this.ctx.createGain();
-          sub.type = 'sine';
-          sub.frequency.setValueAtTime(196, now);
-          sub.frequency.exponentialRampToValueAtTime(73.42, now + 0.42);
-          gain.gain.setValueAtTime(0.001, now);
-          gain.gain.linearRampToValueAtTime(0.08, now + 0.025);
-          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.46);
-          sub.connect(gain);
-          gain.connect(this.master);
-          sub.start(now);
-          sub.stop(now + 0.48);
-
-          this.playBell(587.33, now, 0.65, 0.032, 0.6);
-          this.playBell(880.0, now + 0.04, 0.75, 0.026, 0.7);
+          this.playBell(523.25, now, 0.55, 0.032, 0.45);
+          this.playBell(783.99, now + 0.04, 0.65, 0.024, 0.5);
         }
 
         playShardCatch(combo) {
@@ -1122,8 +1180,8 @@
           const lydian = [523.25, 587.33, 659.25, 739.99, 783.99, 880.0, 987.77, 1046.5, 1174.66, 1318.5];
           const base = lydian[Math.min(combo - 1, lydian.length - 1)];
           const now = this.ctx.currentTime;
-          this.playBell(base, now, 0.85, 0.068, 0.65);
-          this.playBell(base * 1.5, now + 0.06, 0.9, 0.038, 0.75);
+          this.playBell(base, now, 0.75, 0.06, 0.5);
+          this.playBell(base * 1.5, now + 0.055, 0.8, 0.034, 0.55);
         }
 
         playSupernova() {
@@ -1133,7 +1191,7 @@
           const now = this.ctx.currentTime;
           const chord = [261.63, 392.0, 493.88, 587.33, 783.99, 1046.5];
           chord.forEach((f, idx) => {
-            this.playBell(f, now + idx * 0.045, 1.8, idx === 0 ? 0.07 : 0.052, 0.8);
+            this.playBell(f, now + idx * 0.045, 1.5, idx === 0 ? 0.062 : 0.048, 0.6);
           });
         }
 
@@ -1141,10 +1199,10 @@
           if (!this.enabled) return;
           this.unlock();
           if (!this.ctx) return;
-          const notes = [523.25, 659.25, 783.99, 987.77, 1174.66, 1318.5, 1567.98, 2093.0];
+          const notes = [523.25, 659.25, 783.99, 987.77, 1174.66, 1318.5, 1567.98];
           const now = this.ctx.currentTime;
           notes.forEach((freq, i) => {
-            this.playBell(freq, now + i * 0.085, 1.65, 0.065, 0.8);
+            this.playBell(freq, now + i * 0.085, 1.4, 0.06, 0.65);
           });
         }
       }
@@ -1194,6 +1252,7 @@
         height: window.innerHeight,
         dpr: Math.min(window.devicePixelRatio || 1, 2),
         themeKey: 'cyber',
+        colorKey: 'default',
         mode: 'repulse',
         totalSeconds: 60,
         remainingMs: 60000,
@@ -1226,26 +1285,68 @@
         }
       };
 
-      /* ---------------- Tactile Round Particle Sprite (Zero Flicker!) ---------------- */
+      /* ---------------- Tactile Particle Sprites (Light & Dark Optimized) ---------------- */
       const orbSpriteCache = new Map();
 
-      function getOrbSprite(color) {
-        if (orbSpriteCache.has(color)) return orbSpriteCache.get(color);
-        const size = 32;
+      function getOrbSprite(color, isLight, styleType = 'apple') {
+        const cacheKey = `${color}_${isLight ? 'L' : 'D'}_${styleType}`;
+        if (orbSpriteCache.has(cacheKey)) return orbSpriteCache.get(cacheKey);
+        const size = 36;
         const half = size / 2;
         const c = document.createElement('canvas');
         c.width = size;
         c.height = size;
         const gctx = c.getContext('2d');
-        // Crisp, tangible round particle core with a gentle soft halo
-        const grad = gctx.createRadialGradient(half, half, 0, half, half, half);
-        grad.addColorStop(0, '#ffffff');
-        grad.addColorStop(0.28, color);
-        grad.addColorStop(0.55, color + '77');
-        grad.addColorStop(1, 'rgba(0,0,0,0)');
-        gctx.fillStyle = grad;
-        gctx.fillRect(0, 0, size, size);
-        orbSpriteCache.set(color, c);
+
+        if (styleType === 'monet') {
+          // Soft impressionist painterly brushstroke dab (angled translucent oval)
+          gctx.save();
+          gctx.translate(half, half);
+          gctx.rotate(-0.42);
+          gctx.scale(1.38, 0.72);
+          const grad = gctx.createRadialGradient(0, 0, 0, 0, 0, half * 0.78);
+          grad.addColorStop(0, color + 'ee');
+          grad.addColorStop(0.5, color + '99');
+          grad.addColorStop(1, 'rgba(255,255,255,0)');
+          gctx.fillStyle = grad;
+          gctx.beginPath();
+          gctx.arc(0, 0, half * 0.78, 0, Math.PI * 2);
+          gctx.fill();
+          gctx.restore();
+        } else if (styleType === 'kyoto') {
+          // Crisp faceted gold-leaf diamond fleck with subtle metallic highlight
+          gctx.save();
+          gctx.translate(half, half);
+          gctx.rotate(Math.PI / 4);
+          const s = half * 0.62;
+          const grad = gctx.createLinearGradient(-s, -s, s, s);
+          grad.addColorStop(0, '#fff7dc');
+          grad.addColorStop(0.35, color);
+          grad.addColorStop(1, color + 'cc');
+          gctx.fillStyle = grad;
+          gctx.fillRect(-s * 0.58, -s * 0.58, s * 1.16, s * 1.16);
+          gctx.restore();
+        } else if (isLight) {
+          // Clean Apple circular glass bead
+          const grad = gctx.createRadialGradient(half, half, 0, half, half, half);
+          grad.addColorStop(0, color);
+          grad.addColorStop(0.42, color + 'dd');
+          grad.addColorStop(0.7, color + '44');
+          grad.addColorStop(1, 'rgba(255,255,255,0)');
+          gctx.fillStyle = grad;
+          gctx.fillRect(0, 0, size, size);
+        } else {
+          // Luminous deep-space starlight sphere
+          const grad = gctx.createRadialGradient(half, half, 0, half, half, half);
+          grad.addColorStop(0, '#ffffff');
+          grad.addColorStop(0.28, color);
+          grad.addColorStop(0.58, color + '77');
+          grad.addColorStop(1, 'rgba(0,0,0,0)');
+          gctx.fillStyle = grad;
+          gctx.fillRect(0, 0, size, size);
+        }
+
+        orbSpriteCache.set(cacheKey, c);
         return c;
       }
 
@@ -1287,7 +1388,27 @@
       }
 
       function getTheme() {
-        return THEMES[state.themeKey];
+        const base = THEMES[state.themeKey] || THEMES.cyber;
+        const cp = state.colorKey !== 'default' ? COLOR_PRESETS[state.colorKey] : null;
+        if (!cp) return base;
+        return {
+          ...base,
+          accent: cp.accent,
+          accent2: cp.accent2,
+          palette: cp.palette
+        };
+      }
+
+      function recolorActiveParticles() {
+        const pal = getTheme().palette;
+        for (let i = 0; i < textParticles.length; i++) {
+          const p = textParticles[i];
+          if (state.marqueeActive) {
+            p.color = pal[Math.floor((Math.sin(p.lx * 0.0045) * 0.5 + 0.5) * (pal.length - 0.01))];
+          } else {
+            p.color = sampleSpatialColor(p.tx, p.ty);
+          }
+        }
       }
 
       function pickColor() {
@@ -1312,40 +1433,80 @@
       }
 
       function applyTheme(key) {
-        if (!THEMES[key]) return;
+        if (!THEMES[key]) key = 'cyber';
         state.themeKey = key;
-        const t = THEMES[key];
+        const t = getTheme();
         const root = document.documentElement.style;
         root.setProperty('--bg-0', t.bg0);
         root.setProperty('--bg-1', t.bg1);
         root.setProperty('--accent', t.accent);
         root.setProperty('--accent-2', t.accent2);
 
-        document.querySelectorAll('#themeSwatches .swatch').forEach((el) => {
+        if (t.isLight) {
+          root.setProperty('--text', '#1d1d1f');
+          root.setProperty('--muted', 'rgba(29, 29, 31, 0.56)');
+          root.setProperty('--glass', 'rgba(255, 255, 255, 0.38)');
+          root.setProperty('--glass-strong', 'rgba(255, 255, 255, 0.46)');
+          root.setProperty('--glass-border', 'rgba(255, 255, 255, 0.74)');
+          root.setProperty('--glass-stroke', 'rgba(15, 23, 42, 0.07)');
+          root.setProperty('--glass-hover', 'rgba(255, 255, 255, 0.62)');
+          root.setProperty('--btn-bg', 'rgba(15, 23, 42, 0.055)');
+          root.setProperty('--btn-hover', 'rgba(15, 23, 42, 0.1)');
+          root.setProperty('--chip-active-bg', 'rgba(0, 122, 255, 0.13)');
+          root.setProperty('--chip-active-text', t.accent);
+          root.setProperty('--primary-text', '#ffffff');
+          root.setProperty('--shadow', '0 10px 30px rgba(15, 23, 42, 0.08), 0 1px 2px rgba(15, 23, 42, 0.04)');
+          root.setProperty('--modal-backdrop', 'rgba(15, 23, 42, 0.1)');
+          root.setProperty('--wheel-stage-bg', 'rgba(255, 255, 255, 0.22)');
+          root.setProperty('--wheel-band-bg', 'rgba(255, 255, 255, 0.54)');
+          root.setProperty('--wheel-band-border', 'rgba(255, 255, 255, 0.78)');
+          root.setProperty('--wheel-input-bg', 'rgba(255, 255, 255, 0.68)');
+        } else {
+          root.setProperty('--text', '#f5f5f7');
+          root.setProperty('--muted', 'rgba(245, 245, 247, 0.64)');
+          root.setProperty('--glass', 'rgba(22, 32, 48, 0.36)');
+          root.setProperty('--glass-strong', 'rgba(20, 30, 46, 0.42)');
+          root.setProperty('--glass-border', 'rgba(255, 255, 255, 0.18)');
+          root.setProperty('--glass-stroke', 'rgba(255, 255, 255, 0.08)');
+          root.setProperty('--glass-hover', 'rgba(34, 46, 68, 0.54)');
+          root.setProperty('--btn-bg', 'rgba(255, 255, 255, 0.08)');
+          root.setProperty('--btn-hover', 'rgba(255, 255, 255, 0.16)');
+          root.setProperty('--chip-active-bg', 'rgba(100, 210, 255, 0.2)');
+          root.setProperty('--chip-active-text', '#ffffff');
+          root.setProperty('--primary-text', '#0b111a');
+          root.setProperty('--shadow', '0 12px 32px rgba(0, 0, 0, 0.3)');
+          root.setProperty('--modal-backdrop', 'rgba(4, 8, 16, 0.22)');
+          root.setProperty('--wheel-stage-bg', 'rgba(255, 255, 255, 0.05)');
+          root.setProperty('--wheel-band-bg', 'rgba(255, 255, 255, 0.12)');
+          root.setProperty('--wheel-band-border', 'rgba(255, 255, 255, 0.22)');
+          root.setProperty('--wheel-input-bg', 'rgba(22, 32, 48, 0.62)');
+        }
+
+        document.querySelectorAll('#themeSwatches [data-theme]').forEach((el) => {
           el.classList.toggle('active', el.dataset.theme === key);
         });
+        document.querySelectorAll('#colorSwatches [data-color]').forEach((el) => {
+          el.classList.toggle('active', el.dataset.color === state.colorKey);
+        });
 
-        for (let i = 0; i < textParticles.length; i++) {
-          const p = textParticles[i];
-          p.color = sampleSpatialColor(p.tx, p.ty);
-        }
+        recolorActiveParticles();
         try {
-          localStorage.setItem('stardust_timer_theme', key);
+          localStorage.setItem('stardust_timer_theme_v2', key);
         } catch (e) {}
       }
 
-      /* ---------------- Calm Ambient Background Dust (No Flickering!) ---------------- */
+      /* ---------------- Calm Ambient Background Dust ---------------- */
       function initBgDust() {
         bgDust.length = 0;
-        const count = Math.min(75, Math.max(35, Math.floor((state.width * state.height) / 22000)));
+        const count = Math.min(60, Math.max(28, Math.floor((state.width * state.height) / 26000)));
         for (let i = 0; i < count; i++) {
           bgDust.push({
             x: Math.random() * state.width,
             y: Math.random() * state.height,
-            r: Math.random() * 1.4 + 0.5,
-            alpha: Math.random() * 0.28 + 0.08,
-            vx: (Math.random() - 0.5) * 0.14,
-            vy: -(0.06 + Math.random() * 0.14)
+            r: Math.random() * 1.5 + 0.6,
+            alpha: Math.random() * 0.22 + 0.08,
+            vx: (Math.random() - 0.5) * 0.12,
+            vy: -(0.05 + Math.random() * 0.12)
           });
         }
       }
@@ -1375,19 +1536,18 @@
         const centerY = h * 0.48;
         const maxSingleWidth = w * 0.72;
 
-        // Check if finale text is long enough to become a scrolling particle display screen
         const baseFontSize = isFinale
           ? Math.max(54, Math.floor(Math.min(w * 0.13, h * 0.19, 146)))
           : Math.max(48, Math.floor(Math.min(w * 0.165, h * 0.22, 178)));
 
-        offCtx.font = `900 ${baseFontSize}px "Inter", "PingFang SC", "Microsoft YaHei", sans-serif`;
+        offCtx.font = `800 ${baseFontSize}px -apple-system, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif`;
         const naturalWidth = offCtx.measureText(text).width;
 
         const useMarquee = isFinale && naturalWidth > maxSingleWidth * 1.05;
 
         if (useMarquee) {
           const marqueeFont = Math.max(54, Math.floor(Math.min(h * 0.175, 128)));
-          offCtx.font = `900 ${marqueeFont}px "Inter", "PingFang SC", "Microsoft YaHei", sans-serif`;
+          offCtx.font = `800 ${marqueeFont}px -apple-system, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif`;
           const textW = Math.ceil(offCtx.measureText(text).width);
           const padX = 40;
           const stripW = Math.min(8200, textW + padX * 2);
@@ -1396,10 +1556,10 @@
           offCanvas.width = stripW;
           offCanvas.height = stripH;
           offCtx.clearRect(0, 0, stripW, stripH);
-          offCtx.fillStyle = '#ffffff';
+          offCtx.fillStyle = '#000000';
           offCtx.textAlign = 'left';
           offCtx.textBaseline = 'middle';
-          offCtx.font = `900 ${marqueeFont}px "Inter", "PingFang SC", "Microsoft YaHei", sans-serif`;
+          offCtx.font = `800 ${marqueeFont}px -apple-system, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif`;
           offCtx.fillText(text, padX, stripH * 0.5);
 
           const imgData = offCtx.getImageData(0, 0, stripW, stripH).data;
@@ -1417,7 +1577,6 @@
             }
           }
 
-          // Cap total stored marquee points while preserving full-strip density
           const MAX_MARQUEE_PTS = 7500;
           let finalPts = points;
           if (points.length > MAX_MARQUEE_PTS) {
@@ -1430,7 +1589,6 @@
           return { points: finalPts, marquee: true, stripWidth: stripW };
         }
 
-        // Standard centered sampling
         offCanvas.width = w;
         offCanvas.height = h;
         offCtx.clearRect(0, 0, w, h);
@@ -1439,14 +1597,14 @@
         if (naturalWidth > maxSingleWidth) {
           fontSize = Math.max(36, Math.floor(fontSize * (maxSingleWidth / naturalWidth)));
         }
-        offCtx.fillStyle = '#ffffff';
+        offCtx.fillStyle = '#000000';
         offCtx.textAlign = 'center';
         offCtx.textBaseline = 'middle';
-        offCtx.font = `900 ${fontSize}px "Inter", "PingFang SC", "Microsoft YaHei", sans-serif`;
+        offCtx.font = `800 ${fontSize}px -apple-system, "SF Pro Display", "PingFang SC", "Microsoft YaHei", sans-serif`;
         offCtx.fillText(text, w * 0.5, centerY);
 
         const imgData = offCtx.getImageData(0, 0, w, h).data;
-        const baseStep = Math.round(Math.sqrt((w * h) / (isFinale ? 76000 : 52000)));
+        const baseStep = Math.round(Math.sqrt((w * h) / (isFinale ? 76000 : 54000)));
         const step = Math.max(4, Math.min(isFinale ? 6 : 7, baseStep));
         const points = [];
         for (let y = 0; y < h; y += step) {
@@ -1480,11 +1638,10 @@
         state.marqueeActive = sampled.marquee;
 
         if (sampled.marquee) {
+          const b = getMarqueeBounds();
           state.marqueeStripWidth = sampled.stripWidth;
-          state.marqueeLoopLen = Math.max(state.width + 180, sampled.stripWidth + 220);
-          // Start aligned near the left margin so the opening text is immediately readable at a glance
-          const leftInset = Math.max(36, Math.floor(state.width * 0.08));
-          state.marqueeOffset = -leftInset;
+          state.marqueeLoopLen = Math.max(b.width + 180, sampled.stripWidth + 220);
+          state.marqueeOffset = -(b.left + 8);
           state.marqueePauseTimer = 0.85;
         }
 
@@ -1504,7 +1661,7 @@
           const t = targets[i];
           const initTx = sampled.marquee ? (t.x - state.marqueeOffset) : t.x;
           const col = sampled.marquee
-            ? getTheme().palette[Math.floor((t.x / Math.max(1, sampled.stripWidth)) * getTheme().palette.length) % getTheme().palette.length]
+            ? getTheme().palette[Math.floor((Math.sin(t.x * 0.0045) * 0.5 + 0.5) * (getTheme().palette.length - 0.01))]
             : sampleSpatialColor(t.x, t.y);
 
           if (i < textParticles.length) {
@@ -1544,7 +1701,7 @@
               lx: t.x,
               tx: initTx,
               ty: t.y,
-              size: Math.random() * 1.4 + 1.9,
+              size: Math.random() * 1.35 + 1.85,
               color: col,
               phase: Math.random() * Math.PI * 2
             });
@@ -1580,7 +1737,7 @@
           r: 8,
           maxR,
           color: color || getTheme().accent,
-          alpha: 0.85
+          alpha: 0.72
         });
 
         const forceR = maxR * 0.85;
@@ -1597,7 +1754,7 @@
         }
       }
 
-      function spawnFirework(x, y, count = 58, power = 6.0) {
+      function spawnFirework(x, y, count = 58, power = 6.0, interactDigits = false) {
         const pal = getTheme().palette;
         const baseColor = pal[Math.floor(Math.random() * pal.length)];
         const altColor = pal[Math.floor(Math.random() * pal.length)];
@@ -1621,10 +1778,43 @@
           x,
           y,
           r: 6,
-          maxR: 110,
+          maxR: interactDigits ? 210 : 110,
           color: baseColor,
-          alpha: 0.6
+          alpha: 0.62
         });
+
+        // Blast & ignite nearby countdown digit particles so fireworks directly react with the timer!
+        if (interactDigits) {
+          const blastR = 220;
+          for (let i = 0; i < textParticles.length; i++) {
+            const p = textParticles[i];
+            const dx = p.x - x;
+            const dy = p.y - y;
+            const d = Math.hypot(dx, dy) || 1;
+            if (d < blastR) {
+              const ratio = 1 - d / blastR;
+              const impulse = ratio * 13.5;
+              p.vx += (dx / d) * impulse + (Math.random() - 0.5) * 2.2;
+              p.vy += (dy / d) * impulse - ratio * 2.5;
+              p.flashColor = i % 2 === 0 ? baseColor : altColor;
+              p.flashTimer = 1.1 + Math.random() * 0.6;
+              // Shed extra glowing embers directly off struck countdown digits
+              if (Math.random() < ratio * 0.16 && burstParticles.length < 880) {
+                burstParticles.push({
+                  x: p.x,
+                  y: p.y,
+                  vx: (dx / d) * (2.5 + Math.random() * 3.5),
+                  vy: (dy / d) * (2.5 + Math.random() * 3.5) - 1.2,
+                  size: p.size * 0.85,
+                  color: baseColor,
+                  alpha: 0.95,
+                  decay: 0.02 + Math.random() * 0.015,
+                  gravity: 0.055
+                });
+              }
+            }
+          }
+        }
       }
 
       function spawnTrailSpark(x, y) {
@@ -1636,7 +1826,7 @@
           vy: (Math.random() - 0.5) * 0.7 - 0.25,
           size: Math.random() * 1.4 + 1.4,
           color: pickColor(),
-          alpha: 0.68,
+          alpha: 0.62,
           decay: 0.028 + Math.random() * 0.018,
           gravity: -0.006
         });
@@ -1669,7 +1859,7 @@
           vy,
           r: isGolden ? 13 : 10,
           golden: isGolden,
-          color: isGolden ? '#fbbf24' : getTheme().accent,
+          color: isGolden ? '#ff9500' : getTheme().accent,
           pulse: Math.random() * Math.PI * 2,
           life: 17
         });
@@ -1725,7 +1915,7 @@
         }
         state.novaCharge = 0;
         updateNovaUI();
-        state.screenShake = 9;
+        state.screenShake = 8;
         sound.playSupernova();
 
         const cx = state.width * 0.5;
@@ -1839,7 +2029,7 @@
         state.previewingFinale = false;
         state.remainingMs = 0;
         state.celebrationTimer = 7.5;
-        state.screenShake = 7;
+        state.screenShake = 6;
 
         currentRenderedText = '';
         morphToText(getFinaleText(), true, true);
@@ -1858,38 +2048,58 @@
         }
       }
 
-      /* ---------------- Clean Progress Halo ---------------- */
-      function drawMarqueeScreenFrame() {
+      /* ---------------- Clean Progress Halo & Marquee Screen ---------------- */
+      function getMarqueeBounds() {
         const cy = state.height * 0.48;
-        const bandH = Math.min(state.height * 0.3, 210);
-        const topY = cy - bandH * 0.5;
-        const botY = cy + bandH * 0.5;
-        const padX = Math.max(24, state.width * 0.06);
+        const bandH = Math.min(state.height * 0.32, 224);
+        const padX = Math.max(24, Math.floor(state.width * 0.065));
+        const w = Math.max(200, state.width - padX * 2);
+        return {
+          left: padX,
+          right: padX + w,
+          top: cy - bandH * 0.5,
+          bottom: cy + bandH * 0.5,
+          width: w,
+          height: bandH,
+          radius: 28
+        };
+      }
+
+      function traceRoundedRect(c, x, y, w, h, r) {
+        const rr = Math.min(r, w * 0.5, h * 0.5);
+        c.beginPath();
+        c.moveTo(x + rr, y);
+        c.arcTo(x + w, y, x + w, y + h, rr);
+        c.arcTo(x + w, y + h, x, y + h, rr);
+        c.arcTo(x, y + h, x, y, rr);
+        c.arcTo(x, y, x + w, y, rr);
+        c.closePath();
+      }
+
+      function drawMarqueeScreenFrame() {
+        const b = getMarqueeBounds();
         const t = getTheme();
 
         ctx.save();
-        // Subtle glowing glass display band
-        const bgGrad = ctx.createLinearGradient(padX, topY, state.width - padX, botY);
-        bgGrad.addColorStop(0, 'rgba(255,255,255,0.01)');
-        bgGrad.addColorStop(0.5, 'rgba(255,255,255,0.035)');
-        bgGrad.addColorStop(1, 'rgba(255,255,255,0.01)');
-        ctx.fillStyle = bgGrad;
-        ctx.fillRect(padX, topY, state.width - padX * 2, bandH);
+        traceRoundedRect(ctx, b.left, b.top, b.width, b.height, b.radius);
+        ctx.fillStyle = t.isLight ? 'rgba(255, 255, 255, 0.36)' : 'rgba(255, 255, 255, 0.06)';
+        ctx.shadowBlur = t.isLight ? 28 : 24;
+        ctx.shadowColor = t.isLight ? 'rgba(15, 23, 42, 0.07)' : 'rgba(0, 0, 0, 0.32)';
+        ctx.fill();
 
-        // Top & bottom luminous rails
-        const railGrad = ctx.createLinearGradient(padX, 0, state.width - padX, 0);
-        railGrad.addColorStop(0, 'rgba(255,255,255,0)');
-        railGrad.addColorStop(0.18, t.accent + '88');
-        railGrad.addColorStop(0.82, t.accent2 + '88');
-        railGrad.addColorStop(1, 'rgba(255,255,255,0)');
-
-        ctx.strokeStyle = railGrad;
-        ctx.lineWidth = 1.5;
-        ctx.beginPath();
-        ctx.moveTo(padX, topY);
-        ctx.lineTo(state.width - padX, topY);
-        ctx.moveTo(padX, botY);
-        ctx.lineTo(state.width - padX, botY);
+        ctx.shadowBlur = 0;
+        const borderGrad = ctx.createLinearGradient(b.left, b.top, b.right, b.bottom);
+        if (t.isLight) {
+          borderGrad.addColorStop(0, 'rgba(255, 255, 255, 0.92)');
+          borderGrad.addColorStop(0.5, t.accent + '44');
+          borderGrad.addColorStop(1, 'rgba(255, 255, 255, 0.85)');
+        } else {
+          borderGrad.addColorStop(0, 'rgba(255, 255, 255, 0.14)');
+          borderGrad.addColorStop(0.5, t.accent + '55');
+          borderGrad.addColorStop(1, 'rgba(255, 255, 255, 0.14)');
+        }
+        ctx.strokeStyle = borderGrad;
+        ctx.lineWidth = 1.4;
         ctx.stroke();
         ctx.restore();
       }
@@ -1909,30 +2119,83 @@
         const t = getTheme();
 
         ctx.save();
+        // Clean Apple Watch-style subtle track ring
         ctx.beginPath();
         ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.065)';
-        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = t.isLight ? 'rgba(15, 23, 42, 0.065)' : 'rgba(255, 255, 255, 0.08)';
+        ctx.lineWidth = 2.5;
         ctx.stroke();
 
-        ctx.save();
-        ctx.translate(cx, cy);
-        ctx.rotate(nowSec * (urgent ? 0.32 : 0.08));
-        ctx.beginPath();
-        ctx.setLineDash([3, 16]);
-        ctx.arc(0, 0, radius + 12, 0, Math.PI * 2);
-        ctx.strokeStyle = urgent ? 'rgba(251, 113, 133, 0.35)' : 'rgba(255, 255, 255, 0.11)';
-        ctx.lineWidth = 1.3;
-        ctx.stroke();
-        ctx.restore();
+        // Style-specific ring ornamentation!
+        if (t.styleType === 'kyoto') {
+          // 60 precision Japanese watch-dial ticks + subtle inner gold hairline
+          ctx.save();
+          ctx.translate(cx, cy);
+          for (let k = 0; k < 60; k++) {
+            const ang = (k / 60) * Math.PI * 2;
+            const isMajor = k % 5 === 0;
+            const r1 = radius + (isMajor ? 6 : 9);
+            const r2 = radius + 15;
+            ctx.beginPath();
+            ctx.moveTo(Math.cos(ang) * r1, Math.sin(ang) * r1);
+            ctx.lineTo(Math.cos(ang) * r2, Math.sin(ang) * r2);
+            ctx.strokeStyle = isMajor ? 'rgba(156, 106, 32, 0.42)' : 'rgba(156, 106, 32, 0.18)';
+            ctx.lineWidth = isMajor ? 1.5 : 1;
+            ctx.stroke();
+          }
+          ctx.restore();
+        } else if (t.styleType === 'monet') {
+          // Soft concentric pond water ripples
+          ctx.save();
+          for (let rIdx = 1; rIdx <= 2; rIdx++) {
+            const rippleR = radius + rIdx * 16 + Math.sin(nowSec * 1.1 + rIdx) * 3;
+            ctx.beginPath();
+            ctx.arc(cx, cy, rippleR, 0, Math.PI * 2);
+            ctx.strokeStyle = rIdx === 1 ? 'rgba(70, 123, 140, 0.16)' : 'rgba(194, 123, 160, 0.12)';
+            ctx.lineWidth = 1.6;
+            ctx.stroke();
+          }
+          ctx.restore();
+        } else if (t.styleType === 'cosmos') {
+          // Dual glowing orbital radar rings
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate(nowSec * (urgent ? 0.34 : 0.09));
+          ctx.beginPath();
+          ctx.setLineDash([4, 14]);
+          ctx.arc(0, 0, radius + 14, 0, Math.PI * 2);
+          ctx.strokeStyle = urgent ? 'rgba(255, 59, 48, 0.4)' : 'rgba(100, 210, 255, 0.25)';
+          ctx.lineWidth = 1.4;
+          ctx.stroke();
+          ctx.rotate(-nowSec * 0.16);
+          ctx.beginPath();
+          ctx.setLineDash([1, 20]);
+          ctx.arc(0, 0, radius - 14, 0, Math.PI * 2);
+          ctx.strokeStyle = 'rgba(196, 181, 253, 0.18)';
+          ctx.lineWidth = 1.2;
+          ctx.stroke();
+          ctx.restore();
+        } else {
+          // Clean Apple minimalist outer dotted track
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate(nowSec * (urgent ? 0.25 : 0.05));
+          ctx.beginPath();
+          ctx.setLineDash([2, 16]);
+          ctx.arc(0, 0, radius + 12, 0, Math.PI * 2);
+          ctx.strokeStyle = urgent ? 'rgba(255, 59, 48, 0.32)' : 'rgba(15, 23, 42, 0.11)';
+          ctx.lineWidth = 1.4;
+          ctx.stroke();
+          ctx.restore();
+        }
 
         if (progress > 0.001) {
           const startAngle = -Math.PI / 2;
           const endAngle = startAngle + Math.PI * 2 * progress;
           const grad = ctx.createLinearGradient(cx - radius, cy - radius, cx + radius, cy + radius);
           if (urgent) {
-            grad.addColorStop(0, '#fb7185');
-            grad.addColorStop(1, '#fbbf24');
+            grad.addColorStop(0, '#ff3b30');
+            grad.addColorStop(1, '#ff9500');
           } else {
             grad.addColorStop(0, t.accent);
             grad.addColorStop(1, t.accent2);
@@ -1941,18 +2204,24 @@
           ctx.beginPath();
           ctx.arc(cx, cy, radius, startAngle, endAngle);
           ctx.strokeStyle = grad;
-          ctx.lineWidth = urgent ? 3.2 : 2.3;
+          ctx.lineWidth = urgent ? 3.8 : 3.0;
           ctx.lineCap = 'round';
-          ctx.shadowBlur = 14;
-          ctx.shadowColor = urgent ? '#fb7185' : t.accent;
+          ctx.shadowBlur = t.isLight ? 10 : 14;
+          ctx.shadowColor = urgent ? 'rgba(255, 59, 48, 0.35)' : (t.accent + '55');
           ctx.stroke();
 
-          // Steady glowing pearl tip
+          // Leading orb tip
           const tipX = cx + Math.cos(endAngle) * radius;
           const tipY = cy + Math.sin(endAngle) * radius;
-          const tipSprite = getOrbSprite(urgent ? '#fb7185' : t.accent);
-          ctx.globalCompositeOperation = 'lighter';
-          ctx.drawImage(tipSprite, tipX - 11, tipY - 11, 22, 22);
+          ctx.shadowBlur = 0;
+          ctx.beginPath();
+          ctx.arc(tipX, tipY, 5, 0, Math.PI * 2);
+          ctx.fillStyle = urgent ? '#ff3b30' : t.accent;
+          ctx.fill();
+          ctx.beginPath();
+          ctx.arc(tipX, tipY, 2.4, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
         }
         ctx.restore();
       }
@@ -1984,8 +2253,8 @@
               if (urgent) {
                 const cx = state.width * 0.5;
                 const cy = state.height * 0.48;
-                spawnShockwave(cx, cy, 230, '#fb7185', 7.5);
-                state.screenShake = Math.max(state.screenShake, 2.5);
+                spawnShockwave(cx, cy, 230, '#ff3b30', 7.5);
+                state.screenShake = Math.max(state.screenShake, 2.2);
               }
             }
           }
@@ -2020,6 +2289,7 @@
         }
 
         const theme = getTheme();
+        const isLight = theme.isLight;
         ctx.save();
         if (state.screenShake > 0.15) {
           ctx.translate((Math.random() - 0.5) * state.screenShake, (Math.random() - 0.5) * state.screenShake);
@@ -2028,21 +2298,44 @@
           state.screenShake = 0;
         }
 
-        // Clean, serene background fade
-        const fadeAlpha = state.timeScale < 0.5 ? 0.18 : 0.34;
+        // Airy Apple canvas fade
+        const fadeAlpha = state.timeScale < 0.5 ? 0.22 : 0.42;
         ctx.fillStyle = `rgba(${theme.fadeRgb}, ${fadeAlpha})`;
         ctx.fillRect(-20, -20, state.width + 40, state.height + 40);
 
-        // Subtle, clean radial center lift
+        // Soft luminous center wash + style-distinct atmosphere
         const cx = state.width * 0.5;
         const cy = state.height * 0.48;
-        const aura = ctx.createRadialGradient(cx, cy, 20, cx, cy, Math.max(state.width, state.height) * 0.58);
-        aura.addColorStop(0, theme.bg1 + '77');
+        const aura = ctx.createRadialGradient(cx, cy, 20, cx, cy, Math.max(state.width, state.height) * 0.6);
+        aura.addColorStop(0, theme.bg1 + (isLight ? 'aa' : '66'));
         aura.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = aura;
         ctx.fillRect(0, 0, state.width, state.height);
 
-        // Calm, steady ambient dust specks (zero blinking!)
+        if (theme.styleType === 'monet' && theme.waterBlobs) {
+          // Soft impressionist lotus-pond watercolor washes drifting slowly
+          for (let b = 0; b < 3; b++) {
+            const bx = cx + Math.cos(nowSec * 0.16 + b * 2.1) * state.width * 0.28;
+            const by = cy + Math.sin(nowSec * 0.13 + b * 1.8) * state.height * 0.22;
+            const br = Math.min(state.width, state.height) * 0.36;
+            const wg = ctx.createRadialGradient(bx, by, 0, bx, by, br);
+            wg.addColorStop(0, theme.waterBlobs[b]);
+            wg.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = wg;
+            ctx.beginPath();
+            ctx.arc(bx, by, br, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        } else if (theme.styleType === 'kyoto') {
+          // Architectural minimalist washi gallery double-frame hairline
+          ctx.save();
+          ctx.strokeStyle = 'rgba(156, 106, 32, 0.14)';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(24, 24, state.width - 48, state.height - 48);
+          ctx.restore();
+        }
+
+        // Calm ambient dust specks
         for (let i = 0; i < bgDust.length; i++) {
           const st = bgDust[i];
           st.x += st.vx * state.timeScale;
@@ -2051,7 +2344,9 @@
           if (st.x > state.width) st.x = 0;
           if (st.y < 0) st.y = state.height;
           if (st.y > state.height) st.y = 0;
-          ctx.fillStyle = `rgba(226, 232, 240, ${st.alpha.toFixed(2)})`;
+          ctx.fillStyle = isLight
+            ? `rgba(100, 116, 139, ${(st.alpha * 0.75).toFixed(2)})`
+            : `rgba(226, 232, 240, ${st.alpha.toFixed(2)})`;
           ctx.beginPath();
           ctx.arc(st.x, st.y, st.r, 0, Math.PI * 2);
           ctx.fill();
@@ -2066,16 +2361,26 @@
             ctx.beginPath();
             ctx.arc(state.pointer.x, state.pointer.y, state.pointer.down ? 50 : 32, 0, Math.PI * 2);
             ctx.strokeStyle = theme.accent + '66';
-            ctx.lineWidth = 1.4;
+            ctx.lineWidth = 1.5;
             ctx.stroke();
             ctx.restore();
-          } else if (state.mode === 'bullet' && state.pointer.down) {
+          } else if (state.mode === 'bullet') {
             ctx.save();
+            const rOuter = state.pointer.down ? 165 : 95;
             ctx.beginPath();
-            ctx.arc(state.pointer.x, state.pointer.y, 44, 0, Math.PI * 2);
-            ctx.strokeStyle = theme.accent2 + '88';
-            ctx.lineWidth = 1.8;
+            ctx.setLineDash([5, 8]);
+            ctx.arc(state.pointer.x, state.pointer.y, rOuter, 0, Math.PI * 2);
+            ctx.strokeStyle = theme.accent + (state.pointer.down ? '88' : '44');
+            ctx.lineWidth = 1.5;
             ctx.stroke();
+            if (state.pointer.down) {
+              ctx.setLineDash([]);
+              ctx.beginPath();
+              ctx.arc(state.pointer.x, state.pointer.y, 68 + Math.sin(nowSec * 5) * 6, 0, Math.PI * 2);
+              ctx.strokeStyle = theme.accent2 + '66';
+              ctx.lineWidth = 1.4;
+              ctx.stroke();
+            }
             ctx.restore();
           }
         }
@@ -2089,17 +2394,24 @@
           }
         }
 
-        // Steady, Tactile Round Particles (Zero Strobing!)
+        // Steady, Crisp Tactile Particles
         const urgent = state.running && state.remainingMs <= 10000 && state.remainingMs > 0;
         const px = state.pointer.x;
         const py = state.pointer.y;
         const pointerOn = state.pointer.active;
-        const spring = (state.marqueeActive ? 0.16 : 0.082) * state.timeScale;
+        const spring = (state.marqueeActive ? 0.16 : 0.085) * state.timeScale;
         const damping = Math.pow(state.marqueeActive ? 0.78 : 0.84, state.timeScale);
         const loopLen = state.marqueeLoopLen || 1;
         const wrapPad = 140;
 
-        ctx.globalCompositeOperation = 'lighter';
+        const mBounds = state.marqueeActive ? getMarqueeBounds() : null;
+        if (state.marqueeActive && mBounds) {
+          ctx.save();
+          traceRoundedRect(ctx, mBounds.left + 2, mBounds.top + 2, mBounds.width - 4, mBounds.height - 4, mBounds.radius - 2);
+          ctx.clip();
+        }
+
+        ctx.globalCompositeOperation = isLight ? 'source-over' : 'lighter';
         for (let i = 0; i < textParticles.length; i++) {
           const p = textParticles[i];
           if (state.marqueeActive) {
@@ -2107,8 +2419,7 @@
             const rawX = p.lx - state.marqueeOffset;
             const liveTx = (((rawX + wrapPad) % loopLen) + loopLen) % loopLen - wrapPad;
             p.tx = liveTx;
-            // Viewport culling + clean teleport on wrap
-            if (liveTx < -70 || liveTx > state.width + 70) {
+            if (liveTx < mBounds.left - 36 || liveTx > mBounds.right + 36) {
               p.x = liveTx;
               p.y = p.ty;
               p.vx = 0;
@@ -2124,10 +2435,9 @@
           }
 
           p.phase += 0.015 * state.timeScale;
-
-          // Ultra-gentle calm float
-          const floatAmp = urgent ? 1.1 : 0.4;
-          const targetX = p.tx + Math.cos(p.phase) * floatAmp;
+          const floatAmp = urgent ? 1.05 : (theme.styleType === 'monet' ? 1.25 : 0.4);
+          const monetWave = theme.styleType === 'monet' ? Math.sin(nowSec * 1.3 + p.ty * 0.025) * 1.3 : 0;
+          const targetX = p.tx + Math.cos(p.phase) * floatAmp + monetWave;
           const targetY = p.ty + Math.sin(p.phase) * floatAmp;
 
           p.vx += (targetX - p.x) * spring;
@@ -2154,6 +2464,46 @@
                 p.vx += (-dx / d * 0.72 - dy / d * 0.95) * strength;
                 p.vy += (-dy / d * 0.72 + dx / d * 0.95) * strength;
               }
+            } else if (state.mode === 'bullet') {
+              // Chrono-stasis field: gently lifts & suspends nearby countdown digits in zero-G slow-mo!
+              const rad = state.pointer.down ? 195 : 115;
+              if (distSq < rad * rad && distSq > 1) {
+                const d = Math.sqrt(distSq);
+                const ratio = 1 - d / rad;
+                if (state.pointer.down) {
+                  // Zero-gravity floating swirl & gentle radial drift while time is slowed
+                  p.vx += ((dx / d) * 1.45 - (dy / d) * 0.55) * ratio;
+                  p.vy += ((dy / d) * 1.45 + (dx / d) * 0.55 - 0.75) * ratio;
+                  p.vx *= 0.88;
+                  p.vy *= 0.88;
+                } else {
+                  // Gentle chrono-wake ripple as cursor glides over digits
+                  p.vx += (dx / d) * ratio * 1.15;
+                  p.vy += (dy / d) * ratio * 1.15 - ratio * 0.35;
+                }
+              }
+            } else if (state.mode === 'firework') {
+              // Sparkler wand brush: gliding across digits nudges them & ignites tiny sparks!
+              const rad = state.pointer.down ? 115 : 75;
+              if (distSq < rad * rad && distSq > 1) {
+                const d = Math.sqrt(distSq);
+                const ratio = 1 - d / rad;
+                p.vx += (dx / d) * ratio * (state.pointer.down ? 2.4 : 1.1) * state.timeScale;
+                p.vy += ((dy / d) * ratio * (state.pointer.down ? 2.4 : 1.1) - ratio * 0.4) * state.timeScale;
+                if (Math.random() < ratio * (state.pointer.down ? 0.08 : 0.025) && burstParticles.length < 850) {
+                  burstParticles.push({
+                    x: p.x,
+                    y: p.y,
+                    vx: (Math.random() - 0.5) * 2.4,
+                    vy: -1.0 - Math.random() * 2.0,
+                    size: 1.5 + Math.random() * 1.2,
+                    color: pickColor(),
+                    alpha: 0.9,
+                    decay: 0.028 + Math.random() * 0.018,
+                    gravity: 0.04
+                  });
+                }
+              }
             }
           }
 
@@ -2162,11 +2512,30 @@
           p.x += p.vx * state.timeScale;
           p.y += p.vy * state.timeScale;
 
-          const col = urgent && i % 4 === 0 ? '#fb7185' : p.color;
-          const sprite = getOrbSprite(col);
-          const drawSize = p.size * 2.55;
-          ctx.globalAlpha = 0.92;
+          if (p.flashTimer > 0) {
+            p.flashTimer -= rawDt;
+          }
+          const col = urgent && i % 4 === 0
+            ? '#ff3b30'
+            : (p.flashTimer > 0 && p.flashColor ? p.flashColor : p.color);
+          const sprite = getOrbSprite(col, isLight, theme.styleType);
+          const sizeMult = theme.styleType === 'monet' ? 3.05 : (theme.styleType === 'kyoto' ? 2.85 : (isLight ? 2.45 : 2.55));
+          const drawSize = p.size * sizeMult;
+          let alpha = isLight ? 0.94 : 0.92;
+          if (state.marqueeActive && mBounds) {
+            const feather = 44;
+            const distL = p.x - mBounds.left;
+            const distR = mBounds.right - p.x;
+            const edgeFactor = Math.min(1, Math.max(0, Math.min(distL, distR) / feather));
+            if (edgeFactor <= 0.01) continue;
+            alpha *= edgeFactor;
+          }
+          ctx.globalAlpha = alpha;
           ctx.drawImage(sprite, p.x - drawSize * 0.5, p.y - drawSize * 0.5, drawSize, drawSize);
+        }
+
+        if (state.marqueeActive && mBounds) {
+          ctx.restore();
         }
 
         // Burst & Trail Particles
@@ -2181,14 +2550,15 @@
             burstParticles.splice(i, 1);
             continue;
           }
-          const sprite = getOrbSprite(b.color);
-          const dSize = b.size * 2.8;
+          const sprite = getOrbSprite(b.color, isLight, theme.styleType);
+          const dSize = b.size * 2.6;
           ctx.globalAlpha = Math.max(0, b.alpha);
           ctx.drawImage(sprite, b.x - dSize * 0.5, b.y - dSize * 0.5, dSize, dSize);
         }
         ctx.globalAlpha = 1;
 
         // Shockwaves
+        ctx.globalCompositeOperation = 'source-over';
         for (let i = shockwaves.length - 1; i >= 0; i--) {
           const sw = shockwaves[i];
           sw.r += (sw.maxR - sw.r) * 0.12 * state.timeScale + 1.8 * state.timeScale;
@@ -2198,7 +2568,7 @@
             continue;
           }
           ctx.strokeStyle = sw.color;
-          ctx.globalAlpha = sw.alpha * 0.8;
+          ctx.globalAlpha = sw.alpha * (isLight ? 0.55 : 0.8);
           ctx.lineWidth = 1.8;
           ctx.beginPath();
           ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);
@@ -2207,7 +2577,6 @@
         ctx.globalAlpha = 1;
 
         // Collectible Star Shards
-        ctx.globalCompositeOperation = 'source-over';
         for (let i = shards.length - 1; i >= 0; i--) {
           const s = shards[i];
           s.x += s.vx * state.timeScale;
@@ -2226,13 +2595,12 @@
           }
 
           const glowR = s.r + Math.sin(s.pulse) * 1.4;
-          const sprite = getOrbSprite(s.color);
+          const sprite = getOrbSprite(s.color, isLight);
           ctx.save();
-          ctx.globalCompositeOperation = 'lighter';
-          ctx.drawImage(sprite, s.x - glowR * 1.8, s.y - glowR * 1.8, glowR * 3.6, glowR * 3.6);
+          ctx.drawImage(sprite, s.x - glowR * 1.7, s.y - glowR * 1.7, glowR * 3.4, glowR * 3.4);
           ctx.translate(s.x, s.y);
           ctx.rotate(s.pulse * 0.35);
-          ctx.fillStyle = '#ffffff';
+          ctx.fillStyle = isLight ? s.color : '#ffffff';
           ctx.beginPath();
           for (let k = 0; k < 8; k++) {
             const rad = k % 2 === 0 ? glowR * 0.78 : glowR * 0.3;
@@ -2256,7 +2624,7 @@
           }
           ctx.save();
           ctx.globalAlpha = ft.alpha;
-          ctx.font = '700 15px "Inter", sans-serif';
+          ctx.font = '600 15px -apple-system, sans-serif';
           ctx.textAlign = 'center';
           ctx.fillStyle = ft.color;
           ctx.fillText(ft.text, ft.x, ft.y);
@@ -2302,10 +2670,13 @@
           spawnShockwave(pos.x, pos.y, 260, getTheme().accent, 14);
           sound.playShockwave();
         } else if (state.mode === 'firework') {
-          spawnFirework(pos.x, pos.y, 64, 6.2);
+          spawnFirework(pos.x, pos.y, 68, 6.4, true);
           sound.playShardCatch(Math.min(8, Math.floor(Math.random() * 5) + 2));
         } else if (state.mode === 'vortex') {
           spawnShockwave(pos.x, pos.y, 120, getTheme().accent2, -5);
+        } else if (state.mode === 'bullet') {
+          spawnShockwave(pos.x, pos.y, 180, getTheme().accent, 6);
+          sound.playShockwave();
         }
       });
 
@@ -2323,6 +2694,10 @@
       window.addEventListener('pointerup', () => {
         if (state.pointer.down && state.mode === 'vortex') {
           spawnShockwave(state.pointer.x, state.pointer.y, 240, getTheme().accent, 13);
+          sound.playShockwave();
+        } else if (state.pointer.down && state.mode === 'bullet') {
+          // Time-snap release shockwave when exiting bullet time!
+          spawnShockwave(state.pointer.x, state.pointer.y, 250, getTheme().accent2, 11);
           sound.playShockwave();
         }
         state.pointer.down = false;
@@ -2370,10 +2745,22 @@
         });
       });
 
-      document.querySelectorAll('#themeSwatches .swatch').forEach((btn) => {
+      document.querySelectorAll('#themeSwatches [data-theme]').forEach((btn) => {
         btn.addEventListener('click', () => {
+          state.colorKey = 'default';
+          try { localStorage.setItem('stardust_timer_color_key', 'default'); } catch (e) {}
           applyTheme(btn.dataset.theme);
-          showToast(`已切换色调：${THEMES[btn.dataset.theme].name}`);
+          showToast(`已切换风格：${THEMES[btn.dataset.theme].name}`);
+        });
+      });
+
+      document.querySelectorAll('#colorSwatches [data-color]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          state.colorKey = btn.dataset.color;
+          try { localStorage.setItem('stardust_timer_color_key', state.colorKey); } catch (e) {}
+          applyTheme(state.themeKey);
+          const label = state.colorKey === 'default' ? '风格原色' : COLOR_PRESETS[state.colorKey].name;
+          showToast(`已切换色调：${label}`);
         });
       });
 
@@ -2390,7 +2777,7 @@
         soundOnIcon.style.display = sound.enabled ? 'block' : 'none';
         soundOffIcon.style.display = sound.enabled ? 'none' : 'block';
         if (sound.enabled) sound.playTick(false);
-        showToast(sound.enabled ? '空灵音效已开启' : '音效已静音');
+        showToast(sound.enabled ? '音效已开启' : '音效已静音');
       });
 
       function setZenMode(on) {
@@ -2404,7 +2791,18 @@
       zenExitBtn.addEventListener('click', () => setZenMode(false));
 
       eventTitleInput.addEventListener('input', () => {
+        const name = eventTitleInput.value.trim();
+        document.title = name ? `${name} · 星尘倒计时` : '星尘倒计时 · 粒子互动计时器';
+        try {
+          localStorage.setItem('stardust_timer_event_title', eventTitleInput.value);
+        } catch (e) {}
         updateStatusText();
+      });
+
+      eventTitleInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          eventTitleInput.blur();
+        }
       });
 
       finaleTextInput.addEventListener('input', () => {
@@ -2455,9 +2853,11 @@
 
         const wrapVal = (v) => ((v % (maxVal + 1)) + (maxVal + 1)) % (maxVal + 1);
         const pad2 = (v) => String(v).padStart(2, '0');
+        let didDrag = false;
 
         function render() {
           if (wheel.editing) return;
+          el.classList.remove('editing');
           el.innerHTML = '';
           const offsets = [-2, -1, 0, 1, 2];
           offsets.forEach((off) => {
@@ -2465,17 +2865,17 @@
             const div = document.createElement('div');
             div.className = `wheel-item pos-${Math.abs(off)}`;
             div.textContent = pad2(v);
-            div.addEventListener('click', () => {
-              if (off !== 0) {
+            div.addEventListener('click', (e) => {
+              if (didDrag) return;
+              e.stopPropagation();
+              if (off === 0) {
+                openDirectEdit();
+              } else {
                 step(off);
               }
             });
             if (off === 0) {
-              div.title = '双击直接输入数字';
-              div.addEventListener('dblclick', (e) => {
-                e.stopPropagation();
-                openDirectEdit();
-              });
+              div.title = '点击直接输入数字';
             }
             el.appendChild(div);
           });
@@ -2486,20 +2886,21 @@
           if (wheel.editing) return;
           wheel.value = wrapVal(wheel.value + delta);
           render();
-          sound.unlock();
-          if (sound.enabled && sound.ctx) {
-            sound.playBell(680 + (wheel.value % 12) * 18, sound.ctx.currentTime, 0.08, 0.022, 0.08);
-          }
+          sound.playWheelClick();
         }
 
         function openDirectEdit() {
+          if (wheel.editing) return;
           wheel.editing = true;
+          el.classList.add('editing');
           const inp = document.createElement('input');
           inp.type = 'number';
+          inp.inputMode = 'numeric';
           inp.min = '0';
           inp.max = String(maxVal);
-          inp.value = String(wheel.value);
+          inp.value = pad2(wheel.value);
           inp.className = 'wheel-direct-input';
+          inp.addEventListener('pointerdown', (e) => e.stopPropagation());
           el.appendChild(inp);
           inp.focus();
           inp.select();
@@ -2527,39 +2928,53 @@
           });
         }
 
-        // Mouse wheel scroll
         let wheelAccum = 0;
         el.addEventListener('wheel', (e) => {
+          if (wheel.editing) return;
           e.preventDefault();
           wheelAccum += e.deltaY;
-          if (Math.abs(wheelAccum) >= 28) {
+          if (Math.abs(wheelAccum) >= 26) {
             step(wheelAccum > 0 ? 1 : -1);
             wheelAccum = 0;
           }
         }, { passive: false });
 
-        // Pointer drag (mouse & touch)
-        let dragging = false;
+        let pointerDown = false;
+        let startY = 0;
         let lastY = 0;
         let dragAccum = 0;
+        let activePointerId = null;
+
         el.addEventListener('pointerdown', (e) => {
           if (wheel.editing) return;
-          dragging = true;
+          pointerDown = true;
+          didDrag = false;
+          startY = e.clientY;
           lastY = e.clientY;
           dragAccum = 0;
-          el.setPointerCapture(e.pointerId);
+          activePointerId = e.pointerId;
         });
+
         el.addEventListener('pointermove', (e) => {
-          if (!dragging) return;
+          if (!pointerDown || wheel.editing) return;
+          if (!didDrag && Math.abs(e.clientY - startY) > 6) {
+            didDrag = true;
+            try { el.setPointerCapture(activePointerId); } catch (err) {}
+          }
+          if (!didDrag) return;
           const dy = e.clientY - lastY;
           lastY = e.clientY;
           dragAccum += dy;
-          if (Math.abs(dragAccum) >= 26) {
+          if (Math.abs(dragAccum) >= 28) {
             step(dragAccum > 0 ? -1 : 1);
             dragAccum = 0;
           }
         });
-        const stopDrag = () => { dragging = false; };
+
+        const stopDrag = () => {
+          pointerDown = false;
+          setTimeout(() => { didDrag = false; }, 0);
+        };
         el.addEventListener('pointerup', stopDrag);
         el.addEventListener('pointercancel', stopDrag);
 
@@ -2607,7 +3022,7 @@
         }
         setPreset(total, false);
         closeCustomModal();
-        showToast(`已设定倒计时 ${formatTime(total * 1000)}`);
+        showToast(`已设定 ${formatTime(total * 1000)}`);
       });
 
       window.addEventListener('keydown', (e) => {
@@ -2638,13 +3053,25 @@
       window.addEventListener('resize', resizeCanvas);
       window.addEventListener('load', () => {
         try {
-          const savedTheme = localStorage.getItem('stardust_timer_theme');
+          const savedColor = localStorage.getItem('stardust_timer_color_key');
+          if (savedColor && (savedColor === 'default' || COLOR_PRESETS[savedColor])) {
+            state.colorKey = savedColor;
+          }
+          const savedTheme = localStorage.getItem('stardust_timer_theme_v2');
           if (savedTheme && THEMES[savedTheme]) applyTheme(savedTheme);
+          else applyTheme('cyber');
+          const savedTitle = localStorage.getItem('stardust_timer_event_title');
+          if (savedTitle !== null) {
+            eventTitleInput.value = savedTitle;
+            if (savedTitle.trim()) document.title = `${savedTitle.trim()} · 星尘倒计时`;
+          }
           const savedFinale = localStorage.getItem('stardust_timer_finale_text');
           if (savedFinale !== null) {
             finaleTextInput.value = savedFinale;
           }
-        } catch (e) {}
+        } catch (e) {
+          applyTheme('cyber');
+        }
 
         resizeCanvas();
         updateStatusText();
